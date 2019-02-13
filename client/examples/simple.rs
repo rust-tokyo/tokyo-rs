@@ -10,5 +10,5 @@ impl tokyo::Handler for Player {
 
 fn main() {
     println!("starting up...");
-    tokyo::run(Player {}).expect("whoopsie");
+    tokyo::run(Player {}).unwrap();
 }
