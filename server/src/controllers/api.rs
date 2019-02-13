@@ -1,12 +1,12 @@
 use crate::{
-	actors::ApiActor,
+	actors::ClientWsActor,
 	AppState
 };
-use actix_web::{HttpRequest, Path};
+use actix_web::{HttpRequest, State};
 
 
-pub fn stream_logs(
-	(req): (HttpRequest<AppState>),
+pub fn socket_handler(
+	(req, state): (HttpRequest<AppState>, State<AppState>),
 ) -> Result<actix_web::HttpResponse, actix_web::Error> {
-	actix_web::ws::start(&req, ApiActor::new())
+	actix_web::ws::start(&req, ClientWsActor::new(state.game_addr.clone()))
 }

@@ -1,14 +1,15 @@
 #[derive(Serialize, Deserialize)]
 #[serde(tag = "e", content = "data")]
 pub enum GameCommand {
-	#[serde(rename = "increment")]
-	Increment,
+	#[serde(rename = "join")]
+	Join {
+		name: String
+	},
 
-	#[serde(rename = "decrement")]
-	Decrement,
-
-	#[serde(rename = "move")]
-	Move(u32, u32),
+	#[serde(rename = "disconnect")]
+	Disconnect {
+		reason: String
+	},
 }
 
 #[derive(Serialize, Deserialize)]

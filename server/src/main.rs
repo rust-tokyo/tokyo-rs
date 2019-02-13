@@ -6,18 +6,13 @@ extern crate serde_derive;
 
 mod actors;
 mod controllers;
-// mod errors;
-// mod integrations;
-// mod middleware;
-// mod schema;
+mod models;
 
-// use crate::{actors::DbActor, middleware::AuthMiddleware};
-use std::sync::{Arc, Mutex};
-use actix::{Addr, SyncArbiter, System};
+use crate::actors::GameActor;
+use actix::{Actor, Addr, System};
 use actix_web::{
 	http::Method,
 	middleware::{
-		session::{self, CookieSessionBackend},
 		Logger,
 	},
 	server, App,
@@ -39,7 +34,7 @@ pub struct GameState {
 
 #[derive(Debug)]
 pub struct AppState {
-	game_state: Arc<Mutex<GameState>>,
+	game_addr: Addr<GameActor>,
 }
 
 lazy_static! {
@@ -57,17 +52,19 @@ fn main() -> Result<(), String> {
 
 	let actor_system = System::new("meetup-server");
 
+	let game_actor = GameActor::new();
+	let game_actor_addr = game_actor.start();
+
 	let mut server = server::new(move || {
 		let app_state = AppState {
-			game_state: Arc::new(Mutex::new(GameState::default()))
+			game_addr: game_actor_addr.clone()
 		};
 
 		App::with_state(app_state)
 			.middleware(Logger::default())
 			.resource("/socket", |r| {
-				// r.middleware(AuthMiddleware {});
 				r.method(Method::GET)
-					.with(controllers::api::stream_logs);
+					.with(controllers::api::socket_handler);
 			})
 			.handler(
 				"/static",
@@ -84,18 +81,18 @@ fn main() -> Result<(), String> {
 			})
 	});
 
-    // Bind to the development file descriptor if available
-    // Run with: systemfd --no-pid -s http::3000 -- cargo watch -x run
-    let mut listenfd = ListenFd::from_env();
-    server = if let Some(fd) = listenfd.take_tcp_listener(0).unwrap() {
-    	server.listen(fd)
-    } else {
-    	server.bind(format!("0.0.0.0:{}", server_port)).unwrap()
-    };
+	// Bind to the development file descriptor if available
+	// Run with: systemfd --no-pid -s http::3000 -- cargo watch -x run
+	let mut listenfd = ListenFd::from_env();
+	server = if let Some(fd) = listenfd.take_tcp_listener(0).unwrap() {
+		server.listen(fd)
+	} else {
+		server.bind(format!("0.0.0.0:{}", server_port)).unwrap()
+	};
 
-    server.start();
+	server.start();
 
-    let _ = actor_system.run();
+	let _ = actor_system.run();
 
-    Ok(())
+	Ok(())
 }

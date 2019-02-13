@@ -1,22 +1,26 @@
-// use crate::models::messages::{};
-use crate::AppState;
+use crate::{
+	actors::GameActor,
+	AppState,
+	models::messages::Join,
+};
+use actix::Addr;
 use common::models::{GameCommand, GameState};
 use actix::{Actor, ActorContext, StreamHandler};
 use actix_web::ws;
 
-pub struct ApiActor {
-	// ssh_actor_addr: Option<Addr<SshActor>>,
+pub struct ClientWsActor {
+	game_addr: Addr<GameActor>,
 }
 
-impl ApiActor {
-	pub fn new() -> ApiActor {
-		ApiActor {
-			// ssh_actor_addr: None
+impl ClientWsActor {
+	pub fn new(game_addr: Addr<GameActor>) -> ClientWsActor {
+		ClientWsActor {
+			game_addr
 		}
 	}
 }
 
-impl Actor for ApiActor {
+impl Actor for ClientWsActor {
 	type Context = ws::WebsocketContext<Self, AppState>;
 
 	fn started(&mut self, _ctx: &mut Self::Context) {
@@ -24,7 +28,7 @@ impl Actor for ApiActor {
 	}
 }
 
-impl StreamHandler<ws::Message, ws::ProtocolError> for ApiActor {
+impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
 	fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
 		println!("Message: {:#?}", msg);
 
@@ -33,25 +37,20 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ApiActor {
 				let deserialized = serde_json::from_str(&cmd).unwrap();
 
 				match deserialized {
-					GameCommand::Increment => {
-						let mut state = ctx.state().game_state.lock().unwrap();
-						state.counter += 1;
-					}
-					GameCommand::Decrement => {
-						let mut state = ctx.state().game_state.lock().unwrap();
-						state.counter -= 1;
-					}
-					GameCommand::Move(x, y) => {
+					GameCommand::Join {name} => {
+						let connect_msg = Join {
+							name
+						};
 
+						self.game_addr.do_send(connect_msg);
+					}
+					GameCommand::Disconnect {reason} => {
+						println!("Client left - {}", reason);
 					}
 				}
 
-				let counter = {
-					ctx.state().game_state.lock().unwrap().counter
-				};
-
 				let game_state_string = serde_json::to_string(&GameState {
-					counter
+					counter: 1
 				}).unwrap();
 
 				ctx.text(game_state_string);

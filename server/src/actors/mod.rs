@@ -1,3 +1,5 @@
-pub mod api_actor;
+pub mod client_ws_actor;
+pub mod game_actor;
 
-pub use api_actor::ApiActor;
+pub use client_ws_actor::ClientWsActor;
+pub use game_actor::GameActor;
