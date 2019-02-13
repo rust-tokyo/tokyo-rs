@@ -34,12 +34,9 @@ where
     // Create a stream that produces at our desired interval
     tokio::timer::Interval::new_interval(Duration::from_millis(100))
         // Give the user a chance to take a turn
-        .map({
-            let game_state = game_state.clone();
-            move |_| {
-                let game_state = game_state.lock().unwrap();
-                handler.tick(&*game_state)
-            }
+        .map(move |_| {
+            let game_state = game_state.lock().unwrap();
+            handler.tick(&*game_state)
         })
         // Convert their command to a websocket message
         .map(move |command| ws::Message::Text(serde_json::to_string(&command).unwrap()))
