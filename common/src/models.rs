@@ -1,4 +1,4 @@
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "e", content = "data")]
 pub enum GameCommand {
 	#[serde(rename = "join")]
@@ -12,7 +12,7 @@ pub enum GameCommand {
 	},
 }
 
-#[derive(Serialize, Deserialize)]
+#[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {
 	pub counter: u64,
 }
