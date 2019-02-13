@@ -1,0 +1,14 @@
+[package]
+name = "tokyo"
+description = "tokyo-rs meetup library"
+documentation = "https://docs.rs/tokyo"
+repository = "https://github.com/rust-tokyo/tokyo-rs"
+version = "0.1.0"
+authors = ["Jake McGinty <me@jake.su>"]
+edition = "2018"
+license = "Unlicense"
+categories = []
+readme = "README.md"
+
+
+[dependencies]
