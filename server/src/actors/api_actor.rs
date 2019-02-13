@@ -1,6 +1,6 @@
 // use crate::models::messages::{};
 use crate::AppState;
-use crate::models::commands::{GameCommand, GameState};
+use common::models::{GameCommand, GameState};
 use actix::{Actor, ActorContext, StreamHandler};
 use actix_web::ws;
 

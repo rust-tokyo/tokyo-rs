@@ -9,7 +9,6 @@ mod controllers;
 // mod errors;
 // mod integrations;
 // mod middleware;
-mod models;
 // mod schema;
 
 // use crate::{actors::DbActor, middleware::AuthMiddleware};

@@ -12,3 +12,5 @@ readme = "README.md"
 
 
 [dependencies]
+common = { path = "../common" }
+ws = "0.7"
