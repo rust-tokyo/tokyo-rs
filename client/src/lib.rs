@@ -70,11 +70,11 @@ where
 
 /// Begin the client-side game loop, using the provided struct that implements `Handler`
 /// to act on behalf of the player.
-pub fn run<H>(handler: H) -> Result<(), Error>
+pub fn run<H>(key: &str, handler: H) -> Result<(), Error>
 where
     H: Handler + Send + 'static,
 {
-    let url = url::Url::parse("ws://127.0.0.1:3000/socket")?;
+    let url = url::Url::parse(&format!("ws://127.0.0.1:3000/socket?key={}", key))?;
 
     let game_state = Arc::new(Mutex::new(GameState { counter: 0 }));
     let client = tokio_ws::connect_async(url)
