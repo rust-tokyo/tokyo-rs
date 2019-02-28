@@ -8,6 +8,7 @@ use std::{
 };
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
+use std::collections::HashMap;
 
 /// `Handler` is provided as the trait that players can implement to interact
 /// with the game server.
@@ -76,7 +77,11 @@ where
 {
     let url = url::Url::parse(&format!("ws://127.0.0.1:3000/socket?key={}", key))?;
 
-    let game_state = Arc::new(Mutex::new(GameState { counter: 0 }));
+    let game_state = Arc::new(Mutex::new(GameState {
+        players: vec![],
+        bullets: vec![],
+        scoreboard: HashMap::new(),
+    }));
     let client = tokio_ws::connect_async(url)
         .and_then(move |(websocket, _)| {
             // Allow us to build two futures out of this connection - one for send, one for recv.
