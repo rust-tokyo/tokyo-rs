@@ -66,6 +66,10 @@ fn main() -> Result<(), String> {
 				r.method(Method::GET)
 					.with(controllers::api::socket_handler);
 			})
+			.resource("/spectate", |r| {
+				r.method(Method::GET)
+					.with(controllers::api::spectate_handler);
+			})
 			.handler(
 				"/static",
 				actix_web::fs::StaticFiles::new("frontend/resources/public").unwrap(),
