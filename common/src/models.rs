@@ -1,3 +1,4 @@
+use actix::Message;
 use std::collections::HashMap;
 
 #[derive(Debug, Serialize, Deserialize)]
@@ -13,7 +14,7 @@ pub enum GameCommand {
 	Fire, // Between -1.0 and 1.0, otherwise consequences.
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayerState {
 	id: u32,
 	angle: f32,
@@ -21,7 +22,7 @@ pub struct PlayerState {
 	y: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BulletState {
 	id: u32,
 	player_id: u32,
@@ -30,9 +31,13 @@ pub struct BulletState {
 	y: u32,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct GameState {
 	pub players: Vec<PlayerState>,
 	pub bullets: Vec<BulletState>,
 	pub scoreboard: HashMap<u32, u32>,
+}
+
+impl Message for GameState {
+	type Result = ();
 }

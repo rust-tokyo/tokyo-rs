@@ -32,7 +32,6 @@ pub struct GameState {
 	counter: u64,
 }
 
-#[derive(Debug)]
 pub struct AppState {
 	game_addr: Addr<GameActor>,
 }

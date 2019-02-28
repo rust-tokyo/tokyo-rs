@@ -2,7 +2,7 @@ use crate::{
 	actors::GameActor,
 	AppState,
 };
-use actix::Addr;
+use actix::{Addr, AsyncContext, Handler};
 use common::models::{GameCommand, GameState};
 use actix::{Actor, ActorContext, StreamHandler};
 use actix_web::ws;
@@ -23,12 +23,14 @@ impl ClientWsActor {
 impl Actor for ClientWsActor {
 	type Context = ws::WebsocketContext<Self, AppState>;
 
-	fn started(&mut self, _ctx: &mut Self::Context) {
-		println!("Log Actor started!");
+	fn started(&mut self, ctx: &mut Self::Context) {
+		self.game_addr.do_send(crate::actors::game_actor::SocketEvent::Join(ctx.address()));
+		println!("sending socket join event");
 	}
 }
 
 impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
+
 	fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
 		println!("Message: {:#?}", msg);
 
@@ -62,5 +64,14 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
 			}
 			_ => {}
 		}
+	}
+}
+
+impl Handler<GameState> for ClientWsActor {
+	type Result = ();
+
+	fn handle(&mut self, msg: GameState, ctx: &mut Self::Context) {
+		eprintln!("sending a thang");
+		ctx.text(serde_json::to_string(&msg).unwrap());
 	}
 }

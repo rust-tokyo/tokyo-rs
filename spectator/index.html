@@ -1,9 +1,20 @@
 <html>
     <body>
+        <canvas id="canvas" width="1200" height="800" style="border:1px solid #000000;">
+        </canvas>
+
         <script>
-            const socket = new WebSocket('ws://localhost:3000');
+            var c = document.getElementById("canvas");
+            var ctx = c.getContext("2d");
+            ctx.beginPath();
+            ctx.moveTo(75, 50);
+            ctx.lineTo(100, 75);
+            ctx.lineTo(100, 25);
+            ctx.fill();
+
+            const socket = new WebSocket('ws://localhost:3000/spectate');
             socket.addEventListener('open', function (event) {
-                socket.send('Hello Server!');
+                console.log("connected!");
             });
 
             // Listen for messages
