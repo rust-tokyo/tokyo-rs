@@ -32,7 +32,7 @@ pub struct BulletState {
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct GameState {
-	players: Vec<PlayerState>,
-	bullets: Vec<BulletState>,
-	scoreboard: HashMap<u32, u32>,
+	pub players: Vec<PlayerState>,
+	pub bullets: Vec<BulletState>,
+	pub scoreboard: HashMap<u32, u32>,
 }

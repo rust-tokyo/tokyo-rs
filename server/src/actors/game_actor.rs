@@ -1,7 +1,5 @@
 use crate::models::messages::Join;
 use actix::{Actor, Context, Handler};
-use std::thread::JoinHandle;
-use std::time::Instant;
 use spin_sleep::LoopHelper;
 use futures::sync::oneshot;
 
@@ -20,7 +18,6 @@ impl GameActor {
 }
 
 fn game_loop(mut cancel_chan: oneshot::Receiver<()>) {
-	let mut counter = 0;
 	let mut loop_helper = LoopHelper::builder()
 		.build_with_target_rate(30);
 
@@ -32,10 +29,6 @@ fn game_loop(mut cancel_chan: oneshot::Receiver<()>) {
 				break;
 			}
 			_ => {}
-		}
-
-		if counter > 3000 {
-			break;
 		}
 
 		// Send out update packets
