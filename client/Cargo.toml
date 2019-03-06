@@ -10,6 +10,10 @@ license = "Unlicense"
 categories = []
 readme = "README.md"
 
+[[bin]]
+name = "examples-simple"
+path = "examples/simple.rs"
+
 [dependencies]
 common = { path = "../common" }
 failure = "0.1"
