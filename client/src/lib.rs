@@ -2,13 +2,13 @@ use common::models::{GameCommand, GameState};
 use failure::Error;
 use futures::{Future, Sink, Stream};
 use std::{
+    collections::HashMap,
     fmt::Debug,
     sync::{Arc, Mutex},
     time::Duration,
 };
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
-use std::collections::HashMap;
 
 /// `Handler` is provided as the trait that players can implement to interact
 /// with the game server.
