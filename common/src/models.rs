@@ -16,19 +16,19 @@ pub enum GameCommand {
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct PlayerState {
-    id: u32,
-    angle: f32,
-    x: u32,
-    y: u32,
+    pub id: u32,
+    pub angle: f32,
+    pub x: u32,
+    pub y: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
 pub struct BulletState {
-    id: u32,
-    player_id: u32,
-    angle: f32,
-    x: u32,
-    y: u32,
+    pub id: u32,
+    pub player_id: u32,
+    pub angle: f32,
+    pub x: u32,
+    pub y: u32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]

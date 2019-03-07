@@ -1,16 +1,16 @@
 use crate::actors::ClientWsActor;
 use crate::game::Game;
-use crate::models::messages::PlayerGameCommand;
+use crate::models::messages::{ClientStop, PlayerGameCommand};
 use actix::{Actor, Addr, AsyncContext, Context, Handler, Message};
 use common::models::*;
 use futures::sync::oneshot;
 use spin_sleep::LoopHelper;
-use std::collections::HashSet;
+use std::collections::HashMap;
 use std::sync::mpsc::{channel, Receiver, Sender};
 
 #[derive(Debug)]
 pub struct GameActor {
-    connections: HashSet<Addr<ClientWsActor>>,
+    connections: HashMap<String, Addr<ClientWsActor>>,
     cancel_chan: Option<oneshot::Sender<()>>,
     msg_tx: Sender<GameCommand>,
     msg_rx: Option<Receiver<GameCommand>>,
@@ -21,7 +21,7 @@ impl GameActor {
         let (msg_tx, msg_rx) = channel();
 
         GameActor {
-            connections: HashSet::new(),
+            connections: HashMap::new(),
             cancel_chan: None,
             msg_tx,
             msg_rx: Some(msg_rx),
@@ -38,7 +38,7 @@ fn game_loop(
 
     let mut loop_helper = LoopHelper::builder().build_with_target_rate(target_update_per_second);
 
-    let game = Game::new();
+    let mut game = Game::new();
 
     game.init();
 
@@ -92,8 +92,8 @@ impl Actor for GameActor {
 
 #[derive(Message)]
 pub enum SocketEvent {
-    Join(Addr<ClientWsActor>),
-    Leave(Addr<ClientWsActor>),
+    Join(String, Addr<ClientWsActor>),
+    Leave(String, Addr<ClientWsActor>),
 }
 
 impl Handler<SocketEvent> for GameActor {
@@ -101,13 +101,23 @@ impl Handler<SocketEvent> for GameActor {
 
     fn handle(&mut self, msg: SocketEvent, _ctx: &mut Self::Context) {
         match msg {
-            SocketEvent::Join(addr) => {
-                println!("person joined - {:?}", addr);
-                self.connections.insert(addr);
+            SocketEvent::Join(api_key, addr) => {
+                println!("person joined - {:?}", api_key);
+
+                let existing_client_opt = self.connections.insert(api_key, addr);
+
+                if let Some(existing_client) = existing_client_opt {
+                    println!("kicking out old connection");
+                    existing_client.do_send(ClientStop {});
+                }
             }
-            SocketEvent::Leave(addr) => {
-                println!("person left - {:?}", addr);
-                self.connections.remove(&addr);
+            SocketEvent::Leave(api_key, addr) => {
+                if let Some(client_addr) = self.connections.get(&api_key) {
+                    if addr == *client_addr {
+                        println!("person left - {:?}", api_key);
+                        self.connections.remove(&api_key);
+                    }
+                }
             }
         }
     }
@@ -127,7 +137,7 @@ impl Handler<GameState> for GameActor {
     type Result = ();
 
     fn handle(&mut self, msg: GameState, _ctx: &mut Self::Context) {
-        for addr in self.connections.iter() {
+        for addr in self.connections.values() {
             addr.do_send(msg.clone());
         }
     }

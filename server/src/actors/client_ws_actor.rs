@@ -1,8 +1,9 @@
-use crate::models::messages::PlayerGameCommand;
+use crate::models::messages::{ClientStop, PlayerGameCommand};
 use crate::{actors::GameActor, AppState};
 use actix::{Actor, ActorContext, StreamHandler};
 use actix::{Addr, AsyncContext, Handler};
 use actix_web::ws;
+use actix_web::ws::{CloseCode, CloseReason};
 use common::models::GameState;
 
 #[derive(Debug)]
@@ -22,12 +23,18 @@ impl Actor for ClientWsActor {
 
     fn started(&mut self, ctx: &mut Self::Context) {
         self.game_addr
-            .do_send(crate::actors::game_actor::SocketEvent::Join(ctx.address()));
+            .do_send(crate::actors::game_actor::SocketEvent::Join(
+                self.api_key.clone(),
+                ctx.address(),
+            ));
     }
 
     fn stopped(&mut self, ctx: &mut Self::Context) {
         self.game_addr
-            .do_send(crate::actors::game_actor::SocketEvent::Leave(ctx.address()));
+            .do_send(crate::actors::game_actor::SocketEvent::Leave(
+                self.api_key.clone(),
+                ctx.address(),
+            ));
     }
 }
 
@@ -43,7 +50,6 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
                 });
             }
             ws::Message::Close(_) => {
-                println!("closing the connection!");
                 ctx.stop();
             }
             _ => {}
@@ -56,5 +62,16 @@ impl Handler<GameState> for ClientWsActor {
 
     fn handle(&mut self, msg: GameState, ctx: &mut Self::Context) {
         ctx.text(serde_json::to_string(&msg).unwrap());
+    }
+}
+
+impl Handler<ClientStop> for ClientWsActor {
+    type Result = ();
+
+    fn handle(&mut self, _: ClientStop, ctx: &mut Self::Context) {
+        ctx.close(Some(CloseReason {
+            code: CloseCode::Normal,
+            description: Some("The server decided it didn't like you anymore. Or maybe you connected another client with the same API key".to_string())
+        }));
     }
 }

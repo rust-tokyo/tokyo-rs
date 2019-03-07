@@ -1,4 +1,4 @@
-use common::models::GameState;
+use common::models::{GameState, PlayerState};
 use std::collections::HashMap;
 
 pub struct Game {
@@ -23,7 +23,14 @@ impl Game {
         2
     }
 
-    pub fn init(&self) {}
+    pub fn init(&mut self) {
+        self.state.players.push(PlayerState {
+            id: 0,
+            angle: 0.0,
+            x: 0,
+            y: 0,
+        });
+    }
 
     pub fn tick(&self, _dt: f32) {}
 }
