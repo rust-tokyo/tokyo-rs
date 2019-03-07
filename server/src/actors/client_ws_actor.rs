@@ -71,7 +71,6 @@ impl Handler<GameState> for ClientWsActor {
 	type Result = ();
 
 	fn handle(&mut self, msg: GameState, ctx: &mut Self::Context) {
-		eprintln!("sending a thang");
 		ctx.text(serde_json::to_string(&msg).unwrap());
 	}
 }
