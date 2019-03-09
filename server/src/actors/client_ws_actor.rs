@@ -4,7 +4,7 @@ use actix::{Actor, ActorContext, StreamHandler};
 use actix::{Addr, AsyncContext, Handler};
 use actix_web::ws;
 use actix_web::ws::{CloseCode, CloseReason};
-use common::models::GameState;
+use common::models::ServerToClient;
 
 #[derive(Debug)]
 pub struct ClientWsActor {
@@ -57,10 +57,10 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
     }
 }
 
-impl Handler<GameState> for ClientWsActor {
+impl Handler<ServerToClient> for ClientWsActor {
     type Result = ();
 
-    fn handle(&mut self, msg: GameState, ctx: &mut Self::Context) {
+    fn handle(&mut self, msg: ServerToClient, ctx: &mut Self::Context) {
         ctx.text(serde_json::to_string(&msg).unwrap());
     }
 }

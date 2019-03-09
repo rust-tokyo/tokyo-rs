@@ -1,4 +1,4 @@
-use common::models::{GameCommand, GameState};
+use common::models::{ClientState, GameCommand, GameState, ServerToClient};
 use failure::Error;
 use futures::{Future, Sink, Stream};
 use std::{
@@ -15,7 +15,7 @@ use tokio_ws::tungstenite as ws;
 pub trait Handler {
     /// An opportunity, provided multiple times a second, to analyze the current
     /// state of the world and do a single action based on its state.
-    fn tick(&mut self, state: &GameState) -> GameCommand;
+    fn tick(&mut self, state: &ClientState) -> GameCommand;
 }
 
 fn log_err<E: Debug>(e: E) {
@@ -24,7 +24,7 @@ fn log_err<E: Debug>(e: E) {
 
 fn build_game_loop<H, S, D>(
     sink: S,
-    game_state: Arc<Mutex<GameState>>,
+    client_state: Arc<Mutex<ClientState>>,
     mut handler: H,
 ) -> impl Future<Item = (), Error = ()>
 where
@@ -36,11 +36,13 @@ where
     tokio::timer::Interval::new_interval(Duration::from_millis(100))
         // Give the user a chance to take a turn
         .map(move |_| {
-            let game_state = game_state.lock().unwrap();
-            handler.tick(&*game_state)
+            let client_state = client_state.lock().unwrap();
+            handler.tick(&*client_state)
         })
         // Convert their command to a websocket message
-        .map(move |command| ws::Message::Text(serde_json::to_string(&command).unwrap()))
+        .map(move |command: GameCommand| {
+            ws::Message::Text(serde_json::to_string(&command).unwrap())
+        })
         // Satisfy the type gods.
         .map_err(log_err)
         // And send the message out.
@@ -50,7 +52,7 @@ where
 
 fn build_state_updater<S, D>(
     stream: S,
-    game_state: Arc<Mutex<GameState>>,
+    client_state: Arc<Mutex<ClientState>>,
 ) -> impl Future<Item = (), Error = ()>
 where
     S: Stream<Item = ws::Message, Error = D>,
@@ -62,8 +64,16 @@ where
         // We especially only care about proper JSON messages.
         .filter_map(|message| serde_json::from_str(&message).ok())
         // Update the our game state to the most recent reported by the server.
-        .for_each(move |message| {
-            *game_state.lock().unwrap() = message;
+        .for_each(move |server_to_client_msg| {
+            match server_to_client_msg {
+                ServerToClient::Id(player_id) => {
+                    (*client_state).lock().unwrap().id = player_id;
+                },
+                ServerToClient::GameState(state) => {
+                    (*client_state).lock().unwrap().game_state = state;
+                },
+            }
+
             Ok(())
         })
         .map_err(log_err)
@@ -77,18 +87,18 @@ where
 {
     let url = url::Url::parse(&format!("ws://127.0.0.1:3000/socket?key={}", key))?;
 
-    let game_state = Arc::new(Mutex::new(GameState {
-        players: vec![],
-        bullets: vec![],
-        scoreboard: HashMap::new(),
+    let client_state = Arc::new(Mutex::new(ClientState {
+        id: 0,
+        game_state: GameState { players: vec![], bullets: vec![], scoreboard: HashMap::new() },
     }));
+
     let client = tokio_ws::connect_async(url)
         .and_then(move |(websocket, _)| {
             // Allow us to build two futures out of this connection - one for send, one for recv.
             let (sink, stream) = websocket.split();
 
-            let game_loop = build_game_loop(sink, game_state.clone(), handler);
-            let state_updater = build_state_updater(stream, game_state);
+            let game_loop = build_game_loop(sink, client_state.clone(), handler);
+            let state_updater = build_state_updater(stream, client_state);
 
             // Return a future that will finish when either one of the two futures finish.
             state_updater.select(game_loop).then(|_| Ok(()))

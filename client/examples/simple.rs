@@ -2,7 +2,7 @@ use common::models::*;
 
 struct Player;
 impl tokyo::Handler for Player {
-    fn tick(&mut self, state: &GameState) -> GameCommand {
+    fn tick(&mut self, state: &ClientState) -> GameCommand {
         println!("{:#?}", state);
         GameCommand::Rotate(0.0)
     }

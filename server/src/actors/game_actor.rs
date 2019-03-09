@@ -14,6 +14,8 @@ pub struct GameActor {
     cancel_chan: Option<oneshot::Sender<()>>,
     msg_tx: Sender<GameCommand>,
     msg_rx: Option<Receiver<GameCommand>>,
+    player_id_counter: u32,
+    api_key_to_player_id: HashMap<String, u32>,
 }
 
 impl GameActor {
@@ -25,6 +27,8 @@ impl GameActor {
             cancel_chan: None,
             msg_tx,
             msg_rx: Some(msg_rx),
+            player_id_counter: 0,
+            api_key_to_player_id: HashMap::new(),
         }
     }
 }
@@ -53,7 +57,7 @@ fn game_loop(
         }
 
         for cmd in msg_chan.try_iter() {
-            println!("Got a message! - {:?}", cmd);
+            info!("Got a message! - {:?}", cmd);
         }
 
         let dt = 1.0 / target_update_per_second as f32;
@@ -67,14 +71,14 @@ fn game_loop(
         loop_helper.loop_sleep();
     }
 
-    println!("game over!");
+    info!("game over!");
 }
 
 impl Actor for GameActor {
     type Context = Context<GameActor>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        println!("Game Actor started!");
+        info!("Game Actor started!");
         let (cancel_tx, cancel_rx) = oneshot::channel();
         let addr = ctx.address();
 
@@ -102,19 +106,36 @@ impl Handler<SocketEvent> for GameActor {
     fn handle(&mut self, msg: SocketEvent, _ctx: &mut Self::Context) {
         match msg {
             SocketEvent::Join(api_key, addr) => {
-                println!("person joined - {:?}", api_key);
+                let key_clone = api_key.clone();
+                let addr_clone = addr.clone();
+
+                info!("person joined - {:?}", api_key);
 
                 let existing_client_opt = self.connections.insert(api_key, addr);
 
                 if let Some(existing_client) = existing_client_opt {
-                    println!("kicking out old connection");
+                    info!("kicking out old connection");
                     existing_client.do_send(ClientStop {});
+                }
+
+                if let Some(player_id) = self.api_key_to_player_id.get(&key_clone) {
+                    addr_clone.do_send(ServerToClient::Id(*player_id));
+                } else {
+                    // This was the first time this API key connected,
+                    // assign them a player ID and return it
+                    let player_id = self.player_id_counter;
+                    self.player_id_counter += 1;
+                    info!("API key {} gets player ID {}", key_clone, player_id);
+
+                    self.api_key_to_player_id.insert(key_clone, player_id);
+
+                    addr_clone.do_send(ServerToClient::Id(player_id));
                 }
             }
             SocketEvent::Leave(api_key, addr) => {
                 if let Some(client_addr) = self.connections.get(&api_key) {
                     if addr == *client_addr {
-                        println!("person left - {:?}", api_key);
+                        info!("person left - {:?}", api_key);
                         self.connections.remove(&api_key);
                     }
                 }
@@ -138,7 +159,7 @@ impl Handler<GameState> for GameActor {
 
     fn handle(&mut self, msg: GameState, _ctx: &mut Self::Context) {
         for addr in self.connections.values() {
-            addr.do_send(msg.clone());
+            addr.do_send(ServerToClient::GameState(msg.clone()));
         }
     }
 }
