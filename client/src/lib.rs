@@ -10,12 +10,14 @@ use std::{
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
 
+pub mod ship;
+
 /// `Handler` is provided as the trait that players can implement to interact
 /// with the game server.
 pub trait Handler {
     /// An opportunity, provided multiple times a second, to analyze the current
     /// state of the world and do a single action based on its state.
-    fn tick(&mut self, state: &ClientState) -> GameCommand;
+    fn tick(&mut self, state: &ClientState) -> Option<GameCommand>;
 }
 
 fn log_err<E: Debug>(e: E) {
@@ -35,7 +37,7 @@ where
     // Create a stream that produces at our desired interval
     tokio::timer::Interval::new_interval(Duration::from_millis(100))
         // Give the user a chance to take a turn
-        .map(move |_| {
+        .filter_map(move |_| {
             let client_state = client_state.lock().unwrap();
             handler.tick(&*client_state)
         })
