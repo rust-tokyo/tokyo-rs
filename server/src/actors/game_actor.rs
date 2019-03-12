@@ -65,6 +65,17 @@ fn game_loop(
 
         for cmd in msg_chan.try_iter() {
             info!("Got a message! - {:?}", cmd);
+            match cmd {
+                GameLoopCommand::PlayerJoined(id) => {
+                    game.add_player(id);
+                }
+                GameLoopCommand::PlayerLeft(id) => {
+                    game.player_left(id);
+                }
+                GameLoopCommand::GameCommand(id, cmd) => {
+                    game.handle_cmd(id, cmd);
+                }
+            }
         }
 
         let dt = 1.0 / target_update_per_second as f32;
