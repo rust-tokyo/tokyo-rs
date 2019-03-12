@@ -5,6 +5,7 @@ use tokyo::{
 };
 
 struct Player {
+    id: Option<u32>,
     // TODO(player): Customize your ship.
     ship: Ship,
 }
@@ -12,6 +13,7 @@ struct Player {
 impl Player {
     fn new() -> Self {
         Self {
+            id: None,
             ship: Ship::with(
                 Box::new(NormalEngine {}),
                 Box::new(SimpleScanner {}),
@@ -24,7 +26,11 @@ impl tokyo::Handler for Player {
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand> {
         println!("{:#?}", state);
 
-        self.ship.push_state(state.clone());
+        if self.id.is_none() {
+            self.id = Some(state.id);
+        }
+
+        self.ship.push_state(state.game_state.clone());
         self.ship.next_command()
     }
 }

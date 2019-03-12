@@ -1,10 +1,16 @@
 use std::{
     collections::VecDeque,
+    fs::File,
+    io::{BufRead, BufReader},
     time::{Duration, Instant},
 };
 
+use text_io::*;
+
 use crate::{GameCommand, GameState};
 
+// TODO: Restructure this. Ship will be a composition of Engine, Computer and
+// Commander.
 pub struct Ship {
     engine: Box<Engine>,
     scanner: Box<Scanner>,
@@ -37,7 +43,7 @@ impl Ship {
 
         match self.next_action() {
             Action::ChaseFor(target) => {
-                let velocity = self.engine.throttle();
+                let velocity = self.engine.throttle(1.0);
                 let angle = self.scanner.angle_to_chase_for(target, velocity);
 
                 self.next_commands
@@ -124,41 +130,44 @@ impl AtInterval {
 pub type Strategy = Vec<(Action, Box<Condition>)>;
 
 pub trait Engine: Send {
-    fn throttle(&mut self) -> f32;
+    fn throttle(&mut self, input: f32) -> f32;
 }
 
 pub struct NormalEngine;
 impl Engine for NormalEngine {
-    fn throttle(&mut self) -> f32 {
-        1.0
+    fn throttle(&mut self, input: f32) -> f32 {
+        input
     }
 }
 
-pub struct CustomEngine {
-    throttle: f32,
-}
+pub struct CustomEngine {}
 
 impl Engine for CustomEngine {
-    fn throttle(&mut self) -> f32 {
-        self.throttle
+    fn throttle(&mut self, input: f32) -> f32 {
+        unimplemented!();
     }
 }
 
-// TODO(player): Pick a right set of components to create a custom engine.
-// TODO(ryo): Implement predefined components that can be combined with iterator.
+// TODO(player): As it turned out, the engine output does not correspond
+// linearly to the throttle input. An engineer did an extensive measurement of
+// the engine characteristics for you. Each line of the measurements file
+// corresponds to a record of the engine output T3, for a throttle T2, at
+// timestamp T1, in the format of "T1: T2 -> T3". Using the data, implement a
+// calibrated version of throttle() method whose output is linear to the input,
+// so you can control your ship more precisely. One caveat: the measurements
+// were conducted on a brand new engine, so its performance characteristics took
+// some time to stabilize.
 impl CustomEngine {
-    pub fn with<F1, F2, F3, IT>(component1: F1, component2: F2, component3: F3) -> Self
-    where
-        F1: Fn() -> IT,
-        F2: Fn(f32) -> Option<f32>,
-        F3: Fn(f32, f32) -> f32,
-        IT: Iterator<Item = f32>,
-    {
-        Self {
-            throttle: component1()
-                .flat_map(component2)
-                .fold(0.0, component3)
+    pub fn new() -> Self {
+        let file = File::open("data/engine.txt").expect("run cargo from the project root.");
+        for record in BufReader::new(file).lines().map(Result::unwrap) {
+            let (timestamp, input, output): (u32, f32, f32);
+            scan!(record.bytes() => "{}: {} -> {}", timestamp, input, output);
+
+            unimplemented!();
         }
+
+        unimplemented!();
     }
 }
 
@@ -202,9 +211,7 @@ impl Storage for FloppyDisk {
 
 impl FloppyDisk {
     pub fn new() -> Self {
-        Self {
-            state: None,
-        }
+        Self { state: None }
     }
 }
 
