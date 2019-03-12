@@ -9,22 +9,18 @@ use text_io::*;
 
 use crate::{GameCommand, GameState};
 
-// TODO: Restructure this. Ship will be a composition of Engine, Computer and
-// Commander.
-pub struct Ship {
-    engine: Box<Engine>,
-    scanner: Box<Scanner>,
-    strategy: Strategy,
-    next_commands: VecDeque<GameCommand>,
+pub struct Ship<E: Engine, C: Computer> {
+    engine: E,
+    computer: C,
+    commander: Commander,
 }
 
-impl Ship {
-    pub fn with(engine: Box<Engine>, scanner: Box<Scanner>) -> Self {
+impl<E: Engine, C: Computer> Ship<E, C> {
+    pub fn with(engine: E, computer: C) -> Self {
         Self {
             engine,
-            scanner,
-            strategy: Vec::new(),
-            next_commands: VecDeque::new(),
+            computer,
+            commander: Commander::new(),
         }
     }
 
@@ -32,19 +28,41 @@ impl Ship {
         // TODO(ryo): Implement.
     }
 
+    pub fn next_command(&mut self) -> Option<GameCommand> {
+        let command = self.commander.next_command(&self.computer);
+        if let Some(GameCommand::Forward(distance)) = command {
+            Some(GameCommand::Forward(self.engine.calibrate(distance)))
+        } else {
+            command
+        }
+    }
+}
+
+pub struct Commander {
+    strategy: Strategy,
+    next_commands: VecDeque<GameCommand>,
+}
+
+impl Commander {
+    pub fn new() -> Self {
+        Self {
+            strategy: Vec::new(),
+            next_commands: VecDeque::new(),
+        }
+    }
+
     pub fn set_strategy(&mut self, strategy: Strategy) {
         self.strategy = strategy;
     }
 
-    pub fn next_command(&mut self) -> Option<GameCommand> {
+    pub fn next_command(&mut self, computer: &Computer) -> Option<GameCommand> {
         if let Some(next_command) = self.next_commands.pop_front() {
             return Some(next_command);
         }
-
-        match self.next_action() {
+        match self.next_action(computer) {
             Action::ChaseFor(target) => {
-                let velocity = self.engine.throttle(1.0);
-                let angle = self.scanner.angle_to_chase_for(target, velocity);
+                let velocity = 1.0;
+                let angle = computer.angle_to_chase_for(target, velocity);
 
                 self.next_commands
                     .push_back(GameCommand::Forward(velocity));
@@ -55,9 +73,9 @@ impl Ship {
         }
     }
 
-    fn next_action(&mut self) -> Action {
+    fn next_action(&mut self, computer: &Computer) -> Action {
         for (action, condition) in &mut self.strategy {
-            if condition.evaluate(&self.scanner) {
+            if condition.evaluate(computer) {
                 return action.clone();
             }
         }
@@ -87,12 +105,12 @@ pub enum Action {
 }
 
 pub trait Condition: Send {
-    fn evaluate(&mut self, scanner: &Box<Scanner>) -> bool;
+    fn evaluate(&mut self, scanner: &Computer) -> bool;
 }
 
 pub struct Always;
 impl Condition for Always {
-    fn evaluate(&mut self, _: &Box<Scanner>) -> bool {
+    fn evaluate(&mut self, _: &Computer) -> bool {
         true
     }
 }
@@ -103,7 +121,7 @@ pub struct AtInterval {
 }
 
 impl Condition for AtInterval {
-    fn evaluate(&mut self, _: &Box<Scanner>) -> bool {
+    fn evaluate(&mut self, _: &Computer) -> bool {
         let now = Instant::now();
         if now >= self.next {
             self.next += self.interval;
@@ -130,12 +148,12 @@ impl AtInterval {
 pub type Strategy = Vec<(Action, Box<Condition>)>;
 
 pub trait Engine: Send {
-    fn throttle(&mut self, input: f32) -> f32;
+    fn calibrate(&mut self, input: f32) -> f32;
 }
 
 pub struct NormalEngine;
 impl Engine for NormalEngine {
-    fn throttle(&mut self, input: f32) -> f32 {
+    fn calibrate(&mut self, input: f32) -> f32 {
         input
     }
 }
@@ -143,7 +161,7 @@ impl Engine for NormalEngine {
 pub struct CustomEngine {}
 
 impl Engine for CustomEngine {
-    fn throttle(&mut self, input: f32) -> f32 {
+    fn calibrate(&mut self, input: f32) -> f32 {
         unimplemented!();
     }
 }
@@ -182,6 +200,11 @@ pub trait Storage {
     fn past_state<'a>(&'a self, ticks_ago: usize) -> Option<&'a GameState>;
 }
 
+pub trait StorageAccess {
+    fn storage<'a>(&'a self) -> &'a Storage;
+    fn storage_mut<'a>(&'a mut self) -> &'a mut Storage;
+}
+
 /// Poor man's storage can only store the current state.
 pub struct FloppyDisk {
     state: Option<GameState>,
@@ -217,7 +240,7 @@ impl FloppyDisk {
 
 // TODO(player): Implement a better storage than floppy disk.
 
-pub trait Scanner: Send {
+pub trait Computer: StorageAccess + Send {
     fn velocity_of(&self, target: u32) -> f32 {
         // TODO(ryo): Give default implementation.
         unimplemented!();
