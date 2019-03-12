@@ -12,10 +12,17 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 pub struct GameActor {
     connections: HashMap<String, Addr<ClientWsActor>>,
     cancel_chan: Option<oneshot::Sender<()>>,
-    msg_tx: Sender<GameCommand>,
-    msg_rx: Option<Receiver<GameCommand>>,
+    msg_tx: Sender<GameLoopCommand>,
+    msg_rx: Option<Receiver<GameLoopCommand>>,
     player_id_counter: u32,
     api_key_to_player_id: HashMap<String, u32>,
+}
+
+#[derive(Debug)]
+pub enum GameLoopCommand {
+    PlayerJoined(u32),
+    PlayerLeft(u32),
+    GameCommand(u32, GameCommand),
 }
 
 impl GameActor {
@@ -35,7 +42,7 @@ impl GameActor {
 
 fn game_loop(
     game_actor: Addr<GameActor>,
-    msg_chan: Receiver<GameCommand>,
+    msg_chan: Receiver<GameLoopCommand>,
     mut cancel_chan: oneshot::Receiver<()>,
 ) {
     let target_update_per_second = 30;
@@ -94,7 +101,7 @@ impl Actor for GameActor {
     }
 }
 
-#[derive(Message)]
+#[derive(Debug, Message)]
 pub enum SocketEvent {
     Join(String, Addr<ClientWsActor>),
     Leave(String, Addr<ClientWsActor>),
@@ -129,6 +136,10 @@ impl Handler<SocketEvent> for GameActor {
 
                     self.api_key_to_player_id.insert(key_clone, player_id);
 
+                    self.msg_tx
+                        .send(GameLoopCommand::PlayerJoined(player_id))
+                        .expect("The game loop should always be receiving commands");
+
                     addr_clone.do_send(ServerToClient::Id(player_id));
                 }
             }
@@ -136,6 +147,13 @@ impl Handler<SocketEvent> for GameActor {
                 if let Some(client_addr) = self.connections.get(&api_key) {
                     if addr == *client_addr {
                         info!("person left - {:?}", api_key);
+
+                        if let Some(player_id) = self.api_key_to_player_id.get(&api_key) {
+                            self.msg_tx
+                                .send(GameLoopCommand::PlayerLeft(*player_id))
+                                .expect("The game loop should always be receiving commands");
+                        }
+
                         self.connections.remove(&api_key);
                     }
                 }
@@ -148,9 +166,11 @@ impl Handler<PlayerGameCommand> for GameActor {
     type Result = ();
 
     fn handle(&mut self, msg: PlayerGameCommand, _ctx: &mut Self::Context) {
-        self.msg_tx
-            .send(msg.cmd)
-            .expect("The game loop should always be receiving commands");
+        if let Some(player_id) = self.api_key_to_player_id.get(&msg.api_key) {
+            self.msg_tx
+                .send(GameLoopCommand::GameCommand(*player_id, msg.cmd))
+                .expect("The game loop should always be receiving commands");
+        }
     }
 }
 
