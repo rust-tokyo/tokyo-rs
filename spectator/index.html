@@ -13,10 +13,11 @@
             });
 
             class Ship {
-                constructor(x, y, theta) {
-                    this.x = x;
-                    this.y = y;
-                    this.theta = theta;
+                constructor(obj) {
+                    this.id = obj.id;
+                    this.x = obj.x;
+                    this.y = obj.y;
+                    this.angle = obj.angle;
                 }
 
                 move(x, y) {
@@ -25,12 +26,13 @@
                 }
 
                 rotate(theta) {
-                    this.theta = theta;
+                    this.angle = theta;
                 }
 
                 draw(ctx) {
+                    // console.log(`S${this.id} (${this.x},${this.y})`);
                     ctx.translate(this.x, this.y);
-                    ctx.rotate(this.theta);
+                    ctx.rotate(this.angle);
                     ctx.beginPath();
                     ctx.moveTo(-20, -25);
                     ctx.lineTo(0, 25);
@@ -71,36 +73,47 @@
                 }
             }
 
-            var ships = [];
-            var bullets = [];
-            for (var i=0; i<20; i++) {
-                ships.push(new Ship(Math.random() * c.width, Math.random() * c.height, 0));
-            }
+            // var ships = [];
+            // var bullets = [];
+            // for (var i=0; i<20; i++) {
+            //     ships.push(new Ship(Math.random() * c.width, Math.random() * c.height, 0));
+            // }
 
-            for (var i=0; i<20; i++) {
-                bullets.push(new Bullet(Math.random() * c.width, Math.random() * c.height, 0));
-            }
+            // for (var i=0; i<20; i++) {
+            //     bullets.push(new Bullet(Math.random() * c.width, Math.random() * c.height, 0));
+            // }
 
             // Listen for messages
             socket.addEventListener('message', function (event) {
-                ctx.clearRect(0, 0, c.width, c.height);
-                ctx.strokeStyle = "#ffffff";
-                ctx.lineWidth = 1;
-                ctx.lineCap = "square";
-                ctx.lineJoin = "bevel";
-                for (let bullet of bullets) {
-                    bullet.rotate(bullet.theta += 0.3);
-                    bullet.draw(ctx);
-                }
+                let json = JSON.parse(event.data);
+                if (json.e === "state") {
+                    const data = json.data;
 
-                ctx.lineWidth = 3;
-                for (let ship of ships) {
-                    ship.move(ship.x + Math.random(), ship.y + Math.random());
-                    ship.rotate(ship.theta + (Math.random() - 0.5)/5);
-                    ship.draw(ctx);
-                }
+                    ctx.clearRect(0, 0, c.width, c.height);
+                    ctx.strokeStyle = "#ffffff";
+                    ctx.lineWidth = 1;
+                    ctx.lineCap = "square";
+                    ctx.lineJoin = "bevel";
 
-                console.log('Message from server ', event.data);
+                    for (const player of data.players) {
+                        const ship = new Ship(player);
+                        ship.draw(ctx);
+                    }
+
+                    // console.log(`drew ${data.players.length} ships`);
+                    // for (let bullet of bullets) {
+                    //     bullet.rotate(bullet.theta += 0.3);
+                    //     bullet.draw(ctx);
+                    // }
+
+                    // ctx.lineWidth = 3;
+                    // for (let ship of ships) {
+                    //     ship.move(ship.x + Math.random(), ship.y + Math.random());
+                    //     ship.rotate(ship.theta + (Math.random() - 0.5)/5);
+                    //     ship.draw(ctx);
+                    // }
+
+                }
             });
         </script>
     </body>
