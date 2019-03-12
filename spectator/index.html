@@ -64,7 +64,7 @@
 
                 draw(ctx) {
                     ctx.translate(this.x, this.y);
-                    ctx.rotate(this.theta);
+                    ctx.rotate(this.angle);
                     ctx.beginPath();
                     ctx.moveTo(-5, -5);
                     ctx.lineTo(0, 5);
@@ -93,7 +93,7 @@
                     }
 
                     for (const bullet of data.bullets) {
-                        new Bullet(player).draw(ctx);
+                        new Bullet(bullet).draw(ctx);
                     }
                 }
             });

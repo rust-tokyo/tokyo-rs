@@ -22,8 +22,8 @@ impl Game {
         self.state.players.push(PlayerState {
             id: player_id,
             angle: 0.0,
-            x: 0,
-            y: 0,
+            x: 0.0,
+            y: 0.0,
         });
     }
 
@@ -32,15 +32,19 @@ impl Game {
     }
 
     pub fn handle_cmd(&mut self, player_id: u32, cmd: GameCommand) {
-        info!("Player {} sent command {:#?}", player_id, cmd);
+        // info!("Player {} sent command {:#?}", player_id, cmd);
 
         if let Some(player) = self.state.players.iter_mut().find(|p| p.id == player_id) {
             match cmd {
                 GameCommand::Rotate(angle) => {
                     player.angle = angle;
                 }
-                GameCommand::Throttle(throttle) => {
+                GameCommand::Forward(throttle) => {
                     // Move the triangles
+                    let (vel_x, vel_y) = angle_to_vector(player.angle);
+
+                    player.x += vel_x * throttle;
+                    player.y += vel_y * throttle;
                 }
                 Fire => {
                     let bullet_id = self.bullet_id_counter;
@@ -53,8 +57,8 @@ impl Game {
                         id: bullet_id,
                         player_id: player.id,
                         angle: player.angle,
-                        x: player.x + ((bullet_x * distance_from_player) as u32), // TODO(bschwind) - This is broken math
-                        y: player.y + ((bullet_y * distance_from_player) as u32),
+                        x: player.x + ((bullet_x * distance_from_player)), // TODO(bschwind) - This is broken math
+                        y: player.y + ((bullet_y * distance_from_player)),
                     });
                 }
             }

@@ -64,7 +64,7 @@ fn game_loop(
         }
 
         for cmd in msg_chan.try_iter() {
-            info!("Got a message! - {:?}", cmd);
+            // info!("Got a message! - {:?}", cmd);
             match cmd {
                 GameLoopCommand::PlayerJoined(id) => {
                     game.add_player(id);

@@ -28,8 +28,8 @@ pub enum ServerToClient {
 pub struct PlayerState {
     pub id: u32,
     pub angle: f32,
-    pub x: u32,
-    pub y: u32,
+    pub x: f32,
+    pub y: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
@@ -37,8 +37,8 @@ pub struct BulletState {
     pub id: u32,
     pub player_id: u32,
     pub angle: f32,
-    pub x: u32,
-    pub y: u32,
+    pub x: f32,
+    pub y: f32,
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Message)]
