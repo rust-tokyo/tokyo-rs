@@ -7,8 +7,8 @@ pub enum GameCommand {
     #[serde(rename = "rotate")]
     Rotate(f32), // In radians, no punish.
 
-    #[serde(rename = "throttle")]
-    Throttle(f32), // Between -1.0 and 1.0, otherwise consequences.
+    #[serde(rename = "forward")]
+    Forward(f32), // Between -1.0 and 1.0, otherwise consequences.
 
     #[serde(rename = "fire")]
     Fire, // Between -1.0 and 1.0, otherwise consequences.

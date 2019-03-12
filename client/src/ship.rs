@@ -47,7 +47,7 @@ impl Ship {
                 let angle = self.scanner.angle_to_chase_for(target, velocity);
 
                 self.next_commands
-                    .push_back(GameCommand::Throttle(velocity));
+                    .push_back(GameCommand::Forward(velocity));
                 Some(GameCommand::Rotate(angle))
             }
             // TODO(ryo, player): Implement more actions.
