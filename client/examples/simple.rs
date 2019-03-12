@@ -1,27 +1,24 @@
 use common::models::*;
 use tokyo::{
     self,
-    ship::{NormalEngine, Scanner, Ship},
+    ship::{Computer, FloppyDisk, NormalEngine, Ship, Storage, StorageAccess},
 };
 
 struct Player {
     id: Option<u32>,
     // TODO(player): Customize your ship.
-    ship: Ship,
     angle: f32,
     counter: u32,
+    ship: Ship<NormalEngine, OldComputer>,
 }
 
 impl Player {
     fn new() -> Self {
         Self {
             id: None,
-            ship: Ship::with(
-                Box::new(NormalEngine {}),
-                Box::new(SimpleScanner {}),
-            ),
             angle: 0.0,
             counter: 0,
+            ship: Ship::with(NormalEngine {}, OldComputer::new()),
         }
     }
 }
@@ -47,19 +44,31 @@ impl tokyo::Handler for Player {
             1 => GameCommand::Fire,
             _ => GameCommand::Forward(10.0)
         })
-
-        // if self.counter % 3 == 0 {
-        //     Some(GameCommand::Rotate(angle))
-        // } else if self.counter % 3 == 1 {
-        //     Some()
-        // } else {
-        //     Some(GameCommand::Forward(10.0))
-        // }
     }
 }
 
-struct SimpleScanner;
-impl Scanner for SimpleScanner {
+struct OldComputer {
+    storage: FloppyDisk,
+}
+
+impl StorageAccess for OldComputer {
+    fn storage<'a>(&'a self) -> &'a Storage {
+        &self.storage
+    }
+
+    fn storage_mut<'a>(&'a mut self) -> &'a mut Storage {
+        &mut self.storage
+    }
+}
+
+impl Computer for OldComputer {}
+
+impl OldComputer {
+    fn new() -> Self {
+        Self {
+            storage: FloppyDisk::new(),
+        }
+    }
 }
 
 fn main() {
