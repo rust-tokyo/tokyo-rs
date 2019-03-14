@@ -27,17 +27,19 @@ fn main() {
             let throttle = sec as f64 / 1000.0;
             (sec, throttle, engine_output(throttle, day as f64))
         });
-        let max_output = measurements.clone().map(|x| x.2).fold(0./0., f64::max);
+        let max_output = measurements.clone().map(|x| x.2).fold(0. / 0., f64::max);
         for (sec, throttle, output) in measurements {
-            writer.write(
-                format!(
-                    "{}: {} -> {}\n",
-                    start_timestamp + day * 86400 + sec,
-                    throttle as f32,
-                    (output / max_output) as f32,
+            writer
+                .write(
+                    format!(
+                        "{}: {} -> {}\n",
+                        start_timestamp + day * 86400 + sec,
+                        throttle as f32,
+                        (output / max_output) as f32,
+                    )
+                    .as_bytes(),
                 )
-                .as_bytes(),
-            ).unwrap();
+                .unwrap();
         }
     }
 

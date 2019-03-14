@@ -5,16 +5,27 @@ use actix::{Addr, AsyncContext, Handler};
 use actix_web::ws;
 use actix_web::ws::{CloseCode, CloseReason};
 use common::models::ServerToClient;
+use ratelimit_meter::{DirectRateLimiter, LeakyBucket};
+
+const ACTIONS_PER_SECOND: u32 = 10;
 
 #[derive(Debug)]
 pub struct ClientWsActor {
     game_addr: Addr<GameActor>,
     api_key: String,
+    rate_limiter: DirectRateLimiter,
 }
 
 impl ClientWsActor {
     pub fn new(game_addr: Addr<GameActor>, api_key: String) -> ClientWsActor {
-        ClientWsActor { game_addr, api_key }
+        let rate_limiter = DirectRateLimiter::<LeakyBucket>::per_second(
+            std::num::NonZeroU32::new(ACTIONS_PER_SECOND).unwrap(),
+        );
+        ClientWsActor {
+            game_addr,
+            api_key,
+            rate_limiter,
+        }
     }
 }
 
@@ -42,12 +53,18 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
     fn handle(&mut self, msg: ws::Message, ctx: &mut Self::Context) {
         match msg {
             ws::Message::Text(cmd) => {
-                let cmd = serde_json::from_str(&cmd).unwrap();
+                if self.rate_limiter.check().is_ok() {
+                    let cmd_result = serde_json::from_str(&cmd);
 
-                self.game_addr.do_send(PlayerGameCommand {
-                    api_key: self.api_key.clone(),
-                    cmd,
-                });
+                    if let Ok(cmd) = cmd_result {
+                        self.game_addr.do_send(PlayerGameCommand {
+                            api_key: self.api_key.clone(),
+                            cmd,
+                        });
+                    }
+                } else {
+                    warn!("API key {} got rate limited", self.api_key);
+                }
             }
             ws::Message::Close(_) => {
                 ctx.stop();

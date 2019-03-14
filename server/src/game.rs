@@ -1,4 +1,4 @@
-use common::models::{BulletState, GameState, PlayerState, GameCommand};
+use common::models::{BulletState, GameCommand, GameState, PlayerState};
 use std::collections::HashMap;
 
 pub struct Game {
@@ -46,7 +46,7 @@ impl Game {
                     player.x += vel_x * throttle;
                     player.y += vel_y * throttle;
                 }
-                Fire => {
+                GameCommand::Fire => {
                     let bullet_id = self.bullet_id_counter;
                     self.bullet_id_counter += 1;
 
@@ -57,17 +57,15 @@ impl Game {
                         id: bullet_id,
                         player_id: player.id,
                         angle: player.angle,
-                        x: player.x + ((bullet_x * distance_from_player)), // TODO(bschwind) - This is broken math
-                        y: player.y + ((bullet_y * distance_from_player)),
+                        x: player.x + (bullet_x * distance_from_player), // TODO(bschwind) - This is broken math
+                        y: player.y + (bullet_y * distance_from_player),
                     });
                 }
             }
         }
     }
 
-    pub fn init(&mut self) {
-
-    }
+    pub fn init(&mut self) {}
 
     pub fn tick(&mut self, _dt: f32) {
         let bullet_speed = 10.0;
