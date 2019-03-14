@@ -17,11 +17,7 @@ pub struct Ship<E: Engine, C: Computer> {
 
 impl<E: Engine, C: Computer> Ship<E, C> {
     pub fn with(engine: E, computer: C) -> Self {
-        Self {
-            engine,
-            computer,
-            commander: Commander::new(),
-        }
+        Self { engine, computer, commander: Commander::new() }
     }
 
     pub fn push_state(&mut self, state: GameState) {
@@ -45,10 +41,7 @@ pub struct Commander {
 
 impl Commander {
     pub fn new() -> Self {
-        Self {
-            strategy: Vec::new(),
-            next_commands: VecDeque::new(),
-        }
+        Self { strategy: Vec::new(), next_commands: VecDeque::new() }
     }
 
     pub fn set_strategy(&mut self, strategy: Strategy) {
@@ -64,10 +57,9 @@ impl Commander {
                 let velocity = 1.0;
                 let angle = computer.angle_to_chase_for(target, velocity);
 
-                self.next_commands
-                    .push_back(GameCommand::Forward(velocity));
+                self.next_commands.push_back(GameCommand::Forward(velocity));
                 Some(GameCommand::Rotate(angle))
-            }
+            },
             // TODO(ryo, player): Implement more actions.
             _ => None,
         }
@@ -134,10 +126,7 @@ impl Condition for AtInterval {
 
 impl AtInterval {
     pub fn with(interval: Duration) -> Self {
-        Self {
-            interval,
-            next: Instant::now(),
-        }
+        Self { interval, next: Instant::now() }
     }
 }
 
