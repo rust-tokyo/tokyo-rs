@@ -69,7 +69,16 @@ impl Game {
 
     }
 
-    pub fn tick(&self, _dt: f32) {}
+    pub fn tick(&mut self, _dt: f32) {
+        let bullet_speed = 10.0;
+
+        for bullet in &mut self.state.bullets {
+            let (vel_x, vel_y) = angle_to_vector(bullet.angle);
+
+            bullet.x += vel_x * bullet_speed;
+            bullet.y += vel_y * bullet_speed;
+        }
+    }
 }
 
 fn angle_to_vector(angle: f32) -> (f32, f32) {
