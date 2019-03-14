@@ -5,7 +5,7 @@ use actix::{Addr, AsyncContext, Handler};
 use actix_web::ws;
 use actix_web::ws::{CloseCode, CloseReason};
 use common::models::ServerToClient;
-use ratelimit_meter::{DirectRateLimiter, LeakyBucket};
+use ratelimit_meter::{DirectRateLimiter, GCRA};
 
 const ACTIONS_PER_SECOND: u32 = 10;
 
@@ -13,12 +13,12 @@ const ACTIONS_PER_SECOND: u32 = 10;
 pub struct ClientWsActor {
     game_addr: Addr<GameActor>,
     api_key: String,
-    rate_limiter: DirectRateLimiter,
+    rate_limiter: DirectRateLimiter<GCRA>,
 }
 
 impl ClientWsActor {
     pub fn new(game_addr: Addr<GameActor>, api_key: String) -> ClientWsActor {
-        let rate_limiter = DirectRateLimiter::<LeakyBucket>::per_second(
+        let rate_limiter = DirectRateLimiter::<GCRA>::per_second(
             std::num::NonZeroU32::new(ACTIONS_PER_SECOND).unwrap(),
         );
         ClientWsActor {
