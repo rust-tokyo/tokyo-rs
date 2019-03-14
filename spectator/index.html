@@ -32,7 +32,7 @@
                 draw(ctx) {
                     // console.log(`S${this.id} (${this.x},${this.y})`);
                     ctx.translate(this.x, this.y);
-                    ctx.rotate(this.angle);
+                    ctx.rotate(this.angle - Math.PI / 2.0);
                     ctx.beginPath();
                     ctx.moveTo(-20, -25);
                     ctx.lineTo(0, 25);
