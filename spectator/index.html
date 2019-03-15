@@ -88,6 +88,15 @@
                     ctx.lineCap = "square";
                     ctx.lineJoin = "bevel";
 
+                    // Draw the arena bounds
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(512, 0);
+                    ctx.lineTo(512, 512);
+                    ctx.lineTo(0, 512);
+                    ctx.lineTo(0, 0);
+                    ctx.stroke();
+
                     for (const player of data.players) {
                         new Ship(player).draw(ctx);
                     }

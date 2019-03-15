@@ -21,6 +21,7 @@ impl ClientWsActor {
         let rate_limiter = DirectRateLimiter::<GCRA>::per_second(
             std::num::NonZeroU32::new(ACTIONS_PER_SECOND).unwrap(),
         );
+
         ClientWsActor {
             game_addr,
             api_key,
