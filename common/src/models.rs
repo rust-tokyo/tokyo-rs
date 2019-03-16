@@ -47,7 +47,7 @@ impl PlayerState {
     }
 
     pub fn randomize(&mut self, rng: &mut impl rand::Rng, (bound_right, bound_bottom): (f32, f32)) {
-        self.angle = rng.gen_range(0.0, std::f32::consts::PI);
+        self.angle = rng.gen_range(0.0, std::f32::consts::PI * 2.0);
         self.x = rng.gen_range(0.0, bound_right);
         self.y = rng.gen_range(0.0, bound_bottom);
     }
