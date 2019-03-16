@@ -1,4 +1,4 @@
-use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, Triangle};
+use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState};
 use std::time::{Duration, SystemTime};
 
 const DEAD_PUNISH: Duration = Duration::from_secs(5);
@@ -8,6 +8,39 @@ const BULLET_RADIUS: f32 = 2.0;
 const PLAYER_RADIUS: f32 = 10.0;
 
 const BOUNDS: (f32, f32) = (1024.0, 512.0);
+
+pub trait Triangle {
+    fn x(&self) -> f32;
+    fn y(&self) -> f32;
+    fn angle(&self) -> f32;
+    fn radius(&self) -> f32;
+
+    fn is_colliding(&self, other: &Triangle) -> bool {
+        let d_x = other.x() - self.x();
+        let d_y = other.y() - self.y();
+        let d_r = other.radius() + self.radius();
+        let squared_dist = d_x * d_x + d_y * d_y;
+        let squared_radii = d_r * d_r;
+
+        squared_dist < squared_radii
+    }
+}
+
+
+impl Triangle for PlayerState {
+    fn x(&self) -> f32 { self.x }
+    fn y(&self) -> f32 { self.y }
+    fn angle(&self) -> f32 { self.angle }
+    fn radius(&self) -> f32 { PLAYER_RADIUS }
+}
+
+impl Triangle for BulletState {
+    fn x(&self) -> f32 { self.x }
+    fn y(&self) -> f32 { self.y }
+    fn angle(&self) -> f32 { self.angle }
+    fn radius(&self) -> f32 { BULLET_RADIUS }
+}
+
 
 pub struct Game {
     pub state: GameState,

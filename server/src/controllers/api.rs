@@ -9,7 +9,7 @@ pub struct QueryString {
 pub fn socket_handler(
     (req, state, query): (HttpRequest<AppState>, State<AppState>, Query<QueryString>),
 ) -> Result<actix_web::HttpResponse, actix_web::Error> {
-    if crate::APP_CONFIG.api_keys.contains(&query.key) {
+    if crate::APP_CONFIG.dev_mode || crate::APP_CONFIG.api_keys.contains(&query.key) {
         actix_web::ws::start(
             &req,
             ClientWsActor::new(state.game_addr.clone(), query.key.clone()),
