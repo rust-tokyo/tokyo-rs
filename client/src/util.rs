@@ -1,6 +1,16 @@
-use std::{time::{Instant, Duration}, collections::HashMap};
+use std::{time::{Instant, Duration}, collections::HashMap, ops::Sub};
 
-use common::models::{BulletState, PlayerState};
+use common::{models::{BulletState, PlayerState}, vec::Vec2};
+
+pub trait AsSecsF32 {
+    fn as_secs_f32(&self) -> f32;
+}
+
+impl AsSecsF32 for Duration {
+    fn as_secs_f32(&self) -> f32 {
+        self.as_nanos() as f32 / 1e9
+    }
+}
 
 #[derive(Clone, Debug)]
 pub struct Position {
@@ -9,30 +19,34 @@ pub struct Position {
 }
 
 impl Position {
-    pub fn new(x: f32, y: f32) -> Self {
-        Self { x, y }
-    }
-
     pub fn distance(&self, other: &Position) -> f32 {
-        ((self.x - other.x).powi(2) + (self.y - other.y).powi(2)).sqrt()
+        other.sub(*self).magnitude()
     }
 
     pub fn angle_to(&self, other: &Position) -> f32 {
-        ((other.y - self.y) / (other.x - self.x)).atan()
+        other.sub(*self).angle()
     }
 
-    pub fn velocity_to(&self, dest: &Position, time: Duration) -> Velocity {
-        Velocity {
-            dx: (dest.x - self.x) / time.as_secs() as f32,
-            dy: (dest.y - self.y) / time.as_secs() as f32,
-        }
+    pub fn velocity_to(&self, other: &Position, dt: Duration) -> Velocity {
+        other.sub(*self).div(dt.as_secs_f32()).into2()
     }
 
     pub fn project(&self, vel: &Velocity, time: Duration) -> Position {
-        Position {
-            x: self.x + vel.dx * time.as_secs() as f32,
-            y: self.y + vel.dy * time.as_secs() as f32,
-        }
+        self.add(vel.mul(time.as_secs_f32()))
+    }
+}
+
+impl Vec2 for Position {
+    fn new(x: f32, y: f32) -> Self {
+        Self { x, y }
+    }
+
+    fn x(&self) -> f32 {
+        self.x
+    }
+
+    fn y(&self) -> f32 {
+        self.y
     }
 }
 
@@ -43,26 +57,22 @@ pub struct Velocity {
 }
 
 impl Velocity {
-    pub fn new(dx: f32, dy: f32) -> Self {
-        Self { dx, dy }
+    pub fn with_angle_speed(angle: f32, speed: f32) -> Self {
+        Velocity::with_angle(angle).mul(speed)
+    }
+}
+
+impl Vec2 for Velocity {
+    fn new(x: f32, y: f32) -> Self {
+        Self { dx: x, dy: y }
     }
 
-    pub fn zeros() -> Self {
-        Velocity::new(0.0, 0.0)
+    fn x(&self) -> f32 {
+        self.dx
     }
 
-    pub fn with_angle(angle: f32, speed: f32) -> Self {
-        Velocity {
-            dx: speed * angle.cos(),
-            dy: speed * angle.sin(),
-        }
-    }
-
-    pub fn abs(&self) -> Self {
-        Velocity {
-            dx: self.dx.abs(),
-            dy: self.dy.abs(),
-        }
+    fn y(&self) -> f32 {
+        self.dy
     }
 }
 
@@ -216,7 +226,7 @@ impl Bullet {
 
         Bullet {
             position: Position::new(state.x, state.y),
-            velocity: Velocity::with_angle(state.angle, BULLET_SPEED),
+            velocity: Velocity::with_angle_speed(state.angle, BULLET_SPEED),
             player_id: state.player_id,
         }
     }
