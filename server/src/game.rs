@@ -1,5 +1,5 @@
 use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, Triangle};
-use std::collections::{HashMap, HashSet};
+use std::collections::HashSet;
 use std::time::{Duration, SystemTime};
 
 const DEAD_PUNISH: Duration = Duration::from_secs(5);
@@ -8,25 +8,20 @@ const BULLET_SPEED: f32 = 10.0;
 const BULLET_RADIUS: f32 = 2.0;
 const PLAYER_RADIUS: f32 = 10.0;
 
-const BOUNDS_LEFT: f32 = 0.0;
-const BOUNDS_RIGHT: f32 = 512.0;
-const BOUNDS_TOP: f32 = 0.0;
-const BOUNDS_BOTTOM: f32 = 512.0;
+const BOUNDS: (f32, f32) = (512.0, 512.0);
 
 #[derive(Default)]
 pub struct Game {
     pub state: GameState,
+    rng: rand::rngs::ThreadRng,
     bullet_id_counter: u32,
 }
 
 impl Game {
     pub fn add_player(&mut self, player_id: u32) {
-        self.state.players.push(PlayerState {
-            id: player_id,
-            angle: 0.0,
-            x: 0.0,
-            y: 0.0,
-        });
+        let mut player = PlayerState::new(player_id);
+        player.randomize(&mut self.rng, BOUNDS);
+        self.state.players.push(player);
     }
 
     pub fn player_left(&mut self, player_id: u32) {
@@ -49,8 +44,8 @@ impl Game {
                     player.y += vel_y * throttle;
 
                     // Keep the players in bounds
-                    player.x = player.x.max(BOUNDS_LEFT + PLAYER_RADIUS).min(BOUNDS_RIGHT - PLAYER_RADIUS);
-                    player.y = player.y.max(BOUNDS_TOP + PLAYER_RADIUS).min(BOUNDS_BOTTOM - PLAYER_RADIUS);
+                    player.x = player.x.max(PLAYER_RADIUS).min(BOUNDS.0 - PLAYER_RADIUS);
+                    player.y = player.y.max(PLAYER_RADIUS).min(BOUNDS.1 - PLAYER_RADIUS);
                 }
                 GameCommand::Fire => {
                     let bullet_id = self.bullet_id_counter;
@@ -79,7 +74,10 @@ impl Game {
         let revived = self.state.dead
             .drain_filter(|corpse| corpse.respawn <= now)
             .map(|dead| dead.player)
-            .map(|player| { println!("revived player {}", player.id); player });
+            .map(|player| {
+                println!("revived player {}", player.id);
+                player
+            });
 
         self.state.players.extend(revived);
 
@@ -93,10 +91,10 @@ impl Game {
 
         // Remove out-of-bound bullets
         self.state.bullets.retain(|b| {
-            b.x > (BOUNDS_LEFT - BULLET_RADIUS) &&
-            b.x < (BOUNDS_RIGHT + BULLET_RADIUS) &&
-            b.y > (BOUNDS_TOP - BULLET_RADIUS) &&
-            b.y < (BOUNDS_BOTTOM + BULLET_RADIUS)
+            b.x > (BULLET_RADIUS) &&
+            b.x < (BOUNDS.0 + BULLET_RADIUS) &&
+            b.y > (BULLET_RADIUS) &&
+            b.y < (BOUNDS.1 + BULLET_RADIUS)
         });
 
         // count the dead
@@ -111,7 +109,8 @@ impl Game {
                     false
                 }
             });
-            for player in deceased {
+            for mut player in deceased {
+                player.randomize(&mut self.rng, BOUNDS);
                 self.state.dead.push(DeadPlayer {
                     respawn: SystemTime::now() + DEAD_PUNISH,
                     player

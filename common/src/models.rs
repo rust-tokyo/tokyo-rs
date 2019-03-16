@@ -53,6 +53,23 @@ pub struct PlayerState {
     pub y: f32,
 }
 
+impl PlayerState {
+    pub fn new(id: u32) -> Self {
+        Self {
+            id,
+            angle: 0f32,
+            x: 0f32,
+            y: 0f32,
+        }
+    }
+
+    pub fn randomize(&mut self, rng: &mut impl rand::Rng, (bound_right, bound_bottom): (f32, f32)) {
+        self.angle = rng.gen_range(0.0, std::f32::consts::PI);
+        self.x = rng.gen_range(0.0, bound_right);
+        self.y = rng.gen_range(0.0, bound_bottom);
+    }
+}
+
 impl Triangle for PlayerState {
     fn x(&self) -> f32 { self.x }
     fn y(&self) -> f32 { self.y }
