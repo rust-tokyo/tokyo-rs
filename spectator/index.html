@@ -43,6 +43,8 @@
         </div>
 
         <script>
+            const SHIP_SIZE = 18;
+            const BULLET_SIZE = 3;
             var scoreboard = document.getElementById("scoreboard");
             var scoreboard_chart = document.getElementById("chart");
             var c = document.getElementById("canvas");
@@ -80,10 +82,10 @@
                     ctx.translate(this.x, this.y);
                     ctx.rotate(this.angle - Math.PI / 2.0);
                     ctx.beginPath();
-                    ctx.moveTo(-20, -25);
-                    ctx.lineTo(0, 25);
-                    ctx.lineTo(20, -25);
-                    ctx.lineTo(-20, -25);
+                    ctx.moveTo(-SHIP_SIZE*0.8, -SHIP_SIZE);
+                    ctx.lineTo(0, SHIP_SIZE);
+                    ctx.lineTo(SHIP_SIZE*0.8, -SHIP_SIZE);
+                    ctx.lineTo(-SHIP_SIZE*0.8, -SHIP_SIZE);
                     ctx.fill();
                     ctx.stroke();
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
@@ -112,10 +114,10 @@
                     ctx.translate(this.x, this.y);
                     ctx.rotate(this.angle);
                     ctx.beginPath();
-                    ctx.moveTo(-5, -5);
-                    ctx.lineTo(0, 5);
-                    ctx.lineTo(5, -5);
-                    ctx.lineTo(-5, -5);
+                    ctx.moveTo(-BULLET_SIZE, -BULLET_SIZE);
+                    ctx.lineTo(0, BULLET_SIZE);
+                    ctx.lineTo(BULLET_SIZE, -BULLET_SIZE);
+                    ctx.lineTo(-BULLET_SIZE, -BULLET_SIZE);
                     ctx.stroke();
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
                 }
