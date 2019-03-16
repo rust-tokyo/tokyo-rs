@@ -50,4 +50,9 @@ impl Radar {
     pub fn angle_to(&self, target: u32) -> f32 {
         self.own_player().position.angle_to(&self.player(target).position)
     }
+
+    pub fn bullets_to_collide(&self, until: Instant) -> Vec<Bullet> {
+        // TODO
+        unimplemented!();
+    }
 }

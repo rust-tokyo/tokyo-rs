@@ -1,5 +1,3 @@
-#![feature(duration_float)]
-
 use common::models::{ClientState, GameCommand, GameState, ServerToClient, MIN_COMMAND_INTERVAL};
 use failure::Error;
 use futures::{Future, Sink, Stream};

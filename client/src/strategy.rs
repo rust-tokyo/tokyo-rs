@@ -4,7 +4,8 @@ use std::{
     time::{Duration, Instant},
 };
 
-use common::models::{ClientState, GameCommand, MAX_SPEED};
+use common::{models::{ClientState, GameCommand, MIN_COMMAND_INTERVAL, MIN_SPEED, MAX_SPEED}, vec::Vec2};
+use rand::thread_rng;
 
 use crate::radar::Radar;
 
@@ -36,6 +37,17 @@ impl Strategy {
         }
 
         match self.next_behavior() {
+            Behavior::Random => {
+                let rng = thread_rng();
+                match rng.gen_range(0, 4) {
+                    0 => None,
+                    1 => Some(GameCommand::Rotate(
+                        rng.gen_range(0.0, 2.0 * std::f32::consts::PI),
+                    )),
+                    2 => Some(GameCommand::Forward(rng.gen_range(MIN_SPEED, MAX_SPEED))),
+                    3 => Some(GameCommand::Fire),
+                }
+            },
             Behavior::ChaseFor(target) => {
                 let angle = self.radar.angle_to(target);
                 if self.radar.own_player().angle.sub(angle).abs() > 10.0 {
@@ -43,8 +55,29 @@ impl Strategy {
                 } else {
                     Some(GameCommand::Forward(MAX_SPEED))
                 }
-            }
-            // TODO(ryo, player): Implement more behaviors.
+            },
+            Behavior::FireAt(target) => {
+                let angle = self.radar.angle_to(target);
+                if self.radar.own_player().angle.sub(angle).abs() > 1.0 {
+                    Some(GameCommand::Rotate(angle))
+                } else {
+                    Some(GameCommand::Fire)
+                }
+            },
+            Behavior::Dodge => {
+                // The provided implementation only avoids a single collision
+                // occurrence. It also doesn't check the consequence of
+                // performing the dodge action.
+                let dodge_until = Instant::now() + Duration::from_secs(1);
+                if let Some(bullet) = self.radar.bullets_to_collide(dodge_until).iter().next() {
+                    // Move 2 step forward to the direction to move away from the bullet trajectory.
+                    self.next_commands.push_back(GameCommand::Forward(MAX_SPEED));
+                    self.next_commands.push_back(GameCommand::Forward(MAX_SPEED));
+                    Some(GameCommand::Rotate(bullet.velocity.tangent())
+                } else {
+                    None
+                }
+            },
             _ => None,
         }
     }
