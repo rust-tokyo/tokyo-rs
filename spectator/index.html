@@ -3,7 +3,10 @@
         <canvas id="canvas" width="1200" height="800" style="border:1px solid #000000; background: #000;">
         </canvas>
 
+        <div id="scoreboard"></div>
+
         <script>
+            var scoreboard = document.getElementById("scoreboard");
             var c = document.getElementById("canvas");
             var ctx = c.getContext("2d");
 
@@ -32,7 +35,7 @@
                 draw(ctx) {
                     // console.log(`S${this.id} (${this.x},${this.y})`);
                     ctx.translate(this.x, this.y);
-                    ctx.rotate(this.angle);
+                    ctx.rotate(this.angle - Math.PI / 2.0);
                     ctx.beginPath();
                     ctx.moveTo(-20, -25);
                     ctx.lineTo(0, 25);
@@ -88,12 +91,27 @@
                     ctx.lineCap = "square";
                     ctx.lineJoin = "bevel";
 
+                    // Draw the arena bounds
+                    ctx.beginPath();
+                    ctx.moveTo(0, 0);
+                    ctx.lineTo(512, 0);
+                    ctx.lineTo(512, 512);
+                    ctx.lineTo(0, 512);
+                    ctx.lineTo(0, 0);
+                    ctx.stroke();
+
                     for (const player of data.players) {
                         new Ship(player).draw(ctx);
                     }
 
                     for (const bullet of data.bullets) {
                         new Bullet(bullet).draw(ctx);
+                    }
+                    
+
+                    scoreboard.innerHTML = "";
+                    for (const player_id of Object.keys(data.scoreboard)) {
+                        scoreboard.innerHTML += `${player_id}: ${data.scoreboard[player_id]}`;
                     }
                 }
             });
