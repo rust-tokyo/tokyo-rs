@@ -1,5 +1,5 @@
 use common::models::{BulletState, GameCommand, GameState, PlayerState};
-use std::collections::HashMap;
+use std::collections::{HashMap, HashSet};
 
 const BULLET_SPEED: f32 = 10.0;
 const BULLET_RADIUS: f32 = 2.0;
@@ -10,23 +10,13 @@ const BOUNDS_RIGHT: f32 = 512.0;
 const BOUNDS_TOP: f32 = 0.0;
 const BOUNDS_BOTTOM: f32 = 512.0;
 
+#[derive(Default)]
 pub struct Game {
     pub state: GameState,
     bullet_id_counter: u32,
 }
 
 impl Game {
-    pub fn new() -> Game {
-        Game {
-            state: GameState {
-                players: vec![],
-                bullets: vec![],
-                scoreboard: HashMap::new(),
-            },
-            bullet_id_counter: 0,
-        }
-    }
-
     pub fn add_player(&mut self, player_id: u32) {
         self.state.players.push(PlayerState {
             id: player_id,

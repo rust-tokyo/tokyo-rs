@@ -32,7 +32,7 @@ pub struct PlayerState {
     pub y: f32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize)]
 pub struct BulletState {
     pub id: u32,
     pub player_id: u32,
@@ -41,9 +41,10 @@ pub struct BulletState {
     pub y: f32,
 }
 
-#[derive(Clone, Debug, Serialize, Deserialize, Message)]
+#[derive(Clone, Default, Debug, Serialize, Deserialize, Message)]
 pub struct GameState {
     pub players: Vec<PlayerState>,
+    pub dead: Vec<u32>,
     pub bullets: Vec<BulletState>,
     pub scoreboard: HashMap<u32, u32>,
 }
