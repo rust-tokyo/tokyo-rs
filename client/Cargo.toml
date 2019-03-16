@@ -14,6 +14,10 @@ readme = "README.md"
 name = "examples-simple"
 path = "examples/simple.rs"
 
+[[bin]]
+name = "examples-chaser"
+path = "examples/chaser.rs"
+
 [dependencies]
 common = { path = "../common" }
 failure = "0.1"

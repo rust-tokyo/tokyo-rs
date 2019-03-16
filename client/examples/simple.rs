@@ -1,5 +1,4 @@
 use common::models::*;
-
 use tokyo::{self, Handler};
 
 struct Player {

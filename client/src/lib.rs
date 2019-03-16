@@ -2,7 +2,6 @@ use common::models::{ClientState, GameCommand, GameState, ServerToClient};
 use failure::Error;
 use futures::{Future, Sink, Stream};
 use std::{
-    collections::HashMap,
     fmt::Debug,
     sync::{Arc, Mutex},
     time::Duration,
