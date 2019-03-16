@@ -10,7 +10,9 @@ use std::{
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
 
-pub mod ship;
+pub mod radar;
+pub mod strategy;
+pub mod util;
 
 /// `Handler` is provided as the trait that players can implement to interact
 /// with the game server.
