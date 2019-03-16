@@ -35,35 +35,35 @@ pub trait Vec2: Sized {
         }
     }
 
-    fn add<T: Vec2>(self, rhs: T) -> Self {
+    fn add<T: Vec2>(&self, rhs: &T) -> Self {
         Self::new(
             self.x() + rhs.x(),
             self.y() + rhs.y(),
         )
     }
 
-    fn sub<T: Vec2>(self, rhs: T) -> Self {
+    fn sub<T: Vec2>(&self, rhs: &T) -> Self {
         Self::new(
             self.x() - rhs.x(),
             self.y() - rhs.y(),
         )
     }
 
-    fn mul(self, rhs: f32) -> Self {
+    fn mul(&self, rhs: f32) -> Self {
         Self::new(
             self.x() * rhs,
             self.y() * rhs,
         )
     }
 
-    fn div(self, rhs: f32) -> Self {
+    fn div(&self, rhs: f32) -> Self {
         Self::new(
             self.x() / rhs,
             self.y() / rhs,
         )
     }
 
-    fn abs(self) -> Self {
+    fn abs(&self) -> Self {
         Self::new(self.x().abs(), self.y().abs())
     }
 
@@ -87,7 +87,7 @@ pub trait Vec3: Sized {
         (self.x().powi(2) + self.y().powi(2) + self.z().powi(2)).sqrt()
     }
 
-    fn add<T: Vec3>(self, rhs: T) -> Self {
+    fn add<T: Vec3>(&self, rhs: &T) -> Self {
         Self::new(
             self.x() + rhs.x(),
             self.y() + rhs.y(),
@@ -95,7 +95,7 @@ pub trait Vec3: Sized {
         )
     }
 
-    fn sub<T: Vec3>(self, rhs: T) -> Self {
+    fn sub<T: Vec3>(&self, rhs: &T) -> Self {
         Self::new(
             self.x() - rhs.x(),
             self.y() - rhs.y(),
@@ -103,7 +103,7 @@ pub trait Vec3: Sized {
         )
     }
 
-    fn mul(self, rhs: f32) -> Self {
+    fn mul(&self, rhs: f32) -> Self {
         Self::new(
             self.x() * rhs,
             self.y() * rhs,
@@ -111,7 +111,7 @@ pub trait Vec3: Sized {
         )
     }
 
-    fn div(self, rhs: f32) -> Self {
+    fn div(&self, rhs: f32) -> Self {
         Self::new(
             self.x() / rhs,
             self.y() / rhs,
@@ -119,7 +119,7 @@ pub trait Vec3: Sized {
         )
     }
 
-    fn abs(self) -> Self {
+    fn abs(&self) -> Self {
         Self::new(self.x().abs(), self.y().abs(), self.z().abs())
     }
 

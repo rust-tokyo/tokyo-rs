@@ -1,4 +1,4 @@
-use std::{time::{Instant, Duration}, collections::HashMap, ops::Sub};
+use std::{time::{Instant, Duration}, collections::HashMap};
 
 use common::{models::{BulletState, PlayerState}, vec::Vec2};
 
@@ -20,19 +20,19 @@ pub struct Position {
 
 impl Position {
     pub fn distance(&self, other: &Position) -> f32 {
-        other.sub(*self).magnitude()
+        other.sub(self).magnitude()
     }
 
     pub fn angle_to(&self, other: &Position) -> f32 {
-        other.sub(*self).angle()
+        other.sub(self).angle()
     }
 
     pub fn velocity_to(&self, other: &Position, dt: Duration) -> Velocity {
-        other.sub(*self).div(dt.as_secs_f32()).into2()
+        other.sub(self).div(dt.as_secs_f32()).into2()
     }
 
     pub fn project(&self, vel: &Velocity, time: Duration) -> Position {
-        self.add(vel.mul(time.as_secs_f32()))
+        self.add(&vel.mul(time.as_secs_f32()))
     }
 }
 
