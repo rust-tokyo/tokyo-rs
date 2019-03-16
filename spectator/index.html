@@ -3,7 +3,10 @@
         <canvas id="canvas" width="1200" height="800" style="border:1px solid #000000; background: #000;">
         </canvas>
 
+        <div id="scoreboard"></div>
+
         <script>
+            var scoreboard = document.getElementById("scoreboard");
             var c = document.getElementById("canvas");
             var ctx = c.getContext("2d");
 
@@ -103,6 +106,12 @@
 
                     for (const bullet of data.bullets) {
                         new Bullet(bullet).draw(ctx);
+                    }
+                    
+
+                    scoreboard.innerHTML = "";
+                    for (const player_id of Object.keys(data.scoreboard)) {
+                        scoreboard.innerHTML += `${player_id}: ${data.scoreboard[player_id]}`;
                     }
                 }
             });

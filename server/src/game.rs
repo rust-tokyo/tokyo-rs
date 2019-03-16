@@ -100,11 +100,16 @@ impl Game {
         });
 
         // count the dead
+        let mut hits = HashSet::new();
         for bullet in &mut self.state.bullets {
             let deceased = self.state.players.drain_filter(|player| {
-                let kill = player.is_colliding(bullet) && bullet.player_id != player.id;
-                if kill { println!("Bullet {} collided with player {} at ({}, {})", bullet.id, player.id, bullet.x, bullet.y); }
-                kill
+                if player.is_colliding(bullet) && bullet.player_id != player.id {
+                    println!("Player {} killed player {} at ({}, {})", bullet.player_id, player.id, bullet.x, bullet.y);
+                    hits.insert(bullet.player_id);
+                    true
+                } else {
+                    false
+                }
             });
             for player in deceased {
                 self.state.dead.push(DeadPlayer {
@@ -112,6 +117,11 @@ impl Game {
                     player
                 });
             }
+        }
+
+        // Update the scoreboard
+        for player_id in hits {
+            *self.state.scoreboard.entry(player_id).or_default() += 1;
         }
     }
 }
