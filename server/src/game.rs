@@ -1,5 +1,4 @@
 use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, Triangle};
-use std::collections::HashSet;
 use std::time::{Duration, SystemTime};
 
 const DEAD_PUNISH: Duration = Duration::from_secs(5);
