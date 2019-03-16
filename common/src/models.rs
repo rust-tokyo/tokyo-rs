@@ -101,10 +101,20 @@ pub struct DeadPlayer {
 
 #[derive(Clone, Default, Debug, Serialize, Deserialize, Message)]
 pub struct GameState {
+    pub bounds: (f32, f32),
     pub players: Vec<PlayerState>,
     pub dead: Vec<DeadPlayer>,
     pub bullets: Vec<BulletState>,
     pub scoreboard: HashMap<u32, u32>,
+}
+
+impl GameState {
+    pub fn new(bounds: (f32, f32)) -> Self {
+        Self {
+            bounds,
+            ..Default::default()
+        }
+    }
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize, Message)]

@@ -1,4 +1,36 @@
 <html>
+    <head>
+        <style>
+            html, body, div, span, applet, object, iframe,
+            h1, h2, h3, h4, h5, h6, p, blockquote, pre,
+            a, abbr, acronym, address, big, cite, code,
+            del, dfn, em, img, ins, kbd, q, s, samp,
+            small, strike, strong, sub, sup, tt, var,
+            b, u, i, center,
+            dl, dt, dd, ol, ul, li,
+            fieldset, form, label, legend,
+            table, caption, tbody, tfoot, thead, tr, th, td,
+            article, aside, canvas, details, embed,
+            figure, figcaption, footer, header, hgroup,
+            menu, nav, output, ruby, section, summary,
+            time, mark, audio, video {
+                margin: 0;
+                padding: 0;
+                border: 0;
+                font-size: 100%;
+                font: inherit;
+                vertical-align: baseline;
+                overflow:hidden;
+            }
+
+            #scoreboard {
+                display: block;
+                position: absolute;
+                top: 0;
+                left: 0;
+            }
+    </style>
+    </head>
     <body>
         <canvas id="canvas" width="1200" height="800" style="border:1px solid #000000; background: #000;">
         </canvas>
@@ -8,6 +40,11 @@
         <script>
             var scoreboard = document.getElementById("scoreboard");
             var c = document.getElementById("canvas");
+            window.onload = window.onresize = function() {
+                c.width = document.body.clientWidth; //document.width is obsolete
+                c.height = document.body.clientHeight; //document.height is obsolete
+            }
+
             var ctx = c.getContext("2d");
 
             const socket = new WebSocket('ws://localhost:3000/spectate');
@@ -94,9 +131,9 @@
                     // Draw the arena bounds
                     ctx.beginPath();
                     ctx.moveTo(0, 0);
-                    ctx.lineTo(512, 0);
-                    ctx.lineTo(512, 512);
-                    ctx.lineTo(0, 512);
+                    ctx.lineTo(data.bounds[0], 0);
+                    ctx.lineTo(data.bounds[0], data.bounds[1]);
+                    ctx.lineTo(0, data.bounds[1]);
                     ctx.lineTo(0, 0);
                     ctx.stroke();
 

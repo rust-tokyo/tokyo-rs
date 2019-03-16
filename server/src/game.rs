@@ -8,13 +8,22 @@ const BULLET_SPEED: f32 = 10.0;
 const BULLET_RADIUS: f32 = 2.0;
 const PLAYER_RADIUS: f32 = 10.0;
 
-const BOUNDS: (f32, f32) = (512.0, 512.0);
+const BOUNDS: (f32, f32) = (1024.0, 512.0);
 
-#[derive(Default)]
 pub struct Game {
     pub state: GameState,
     rng: rand::rngs::ThreadRng,
     bullet_id_counter: u32,
+}
+
+impl Default for Game {
+    fn default() -> Self {
+        Self {
+            state: GameState::new(BOUNDS),
+            rng: Default::default(),
+            bullet_id_counter: 0,
+        }
+    }
 }
 
 impl Game {
