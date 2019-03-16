@@ -1,10 +1,11 @@
-use common::models::{ClientState, GameCommand, GameState, ServerToClient};
+#![feature(duration_float)]
+
+use common::models::{ClientState, GameCommand, GameState, ServerToClient, MIN_COMMAND_INTERVAL};
 use failure::Error;
 use futures::{Future, Sink, Stream};
 use std::{
     fmt::Debug,
     sync::{Arc, Mutex},
-    time::Duration,
 };
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
@@ -36,7 +37,7 @@ where
     D: Debug,
 {
     // Create a stream that produces at our desired interval
-    tokio::timer::Interval::new_interval(Duration::from_millis(100))
+    tokio::timer::Interval::new_interval(MIN_COMMAND_INTERVAL)
         // Give the user a chance to take a turn
         .filter_map(move |_| {
             let client_state = client_state.lock().unwrap();

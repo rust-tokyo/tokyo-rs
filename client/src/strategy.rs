@@ -4,11 +4,9 @@ use std::{
     time::{Duration, Instant},
 };
 
-use common::models::{ClientState, GameCommand};
+use common::models::{ClientState, GameCommand, MAX_SPEED};
 
 use crate::radar::Radar;
-
-const MAX_SPEED: f32 = 1.0;
 
 type BehaviorVec = Vec<(Behavior, Box<Condition>)>;
 
