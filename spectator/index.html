@@ -24,9 +24,11 @@
             }
 
             #scoreboard {
+                font-family: monospace;
+                color: white;
                 display: block;
                 position: absolute;
-                top: 0;
+                top: 10;
                 left: 0;
             }
     </style>
@@ -35,10 +37,14 @@
         <canvas id="canvas" width="1200" height="800" style="border:1px solid #000000; background: #000;">
         </canvas>
 
-        <div id="scoreboard"></div>
+        <div id="scoreboard">
+            <h1>Scores</h1>
+            <pre id="chart"></pre>
+        </div>
 
         <script>
             var scoreboard = document.getElementById("scoreboard");
+            var scoreboard_chart = document.getElementById("chart");
             var c = document.getElementById("canvas");
             window.onload = window.onresize = function() {
                 c.width = document.body.clientWidth; //document.width is obsolete
@@ -137,6 +143,8 @@
                     ctx.lineTo(0, 0);
                     ctx.stroke();
 
+                    scoreboard.style.left = data.bounds[0] + 15;
+
                     for (const player of data.players) {
                         new Ship(player).draw(ctx);
                     }
@@ -146,9 +154,9 @@
                     }
                     
 
-                    scoreboard.innerHTML = "";
+                    chart.innerHTML = "";
                     for (const player_id of Object.keys(data.scoreboard)) {
-                        scoreboard.innerHTML += `${player_id}: ${data.scoreboard[player_id]}`;
+                        chart.innerHTML += `${player_id}: ${data.scoreboard[player_id]}\n`;
                     }
                 }
             });
