@@ -35,39 +35,40 @@ pub trait Vec2: Sized {
         }
     }
 
-    fn add<T: Vec2>(&self, other: &T) -> Self {
+    fn add<T: Vec2>(self, rhs: T) -> Self {
         Self::new(
-            self.x() + other.x(),
-            self.y() + other.y(),
+            self.x() + rhs.x(),
+            self.y() + rhs.y(),
         )
     }
 
-    fn sub<T: Vec2>(&self, other: &T) -> Self {
+    fn sub<T: Vec2>(self, rhs: T) -> Self {
         Self::new(
-            self.x() - other.x(),
-            self.y() - other.y(),
+            self.x() - rhs.x(),
+            self.y() - rhs.y(),
         )
     }
 
-    fn mul(&self, factor: f32) -> Self {
+    fn mul(self, rhs: f32) -> Self {
         Self::new(
-            self.x() * factor,
-            self.y() * factor,
+            self.x() * rhs,
+            self.y() * rhs,
         )
     }
 
-    fn div(&self, factor: f32) -> Self {
+    fn div(self, rhs: f32) -> Self {
         Self::new(
-            self.x() / factor,
-            self.y() / factor,
+            self.x() / rhs,
+            self.y() / rhs,
         )
     }
 
-    fn abs(&self) -> Self {
+    fn abs(self) -> Self {
         Self::new(self.x().abs(), self.y().abs())
     }
 
-    fn into<T: Vec2>(self) -> T {
+    // Note: std::convert::Into can not be implemented for a type parameter.
+    fn into2<T: Vec2>(&self) -> T {
         T::new(self.x(), self.y())
     }
 }
@@ -86,43 +87,44 @@ pub trait Vec3: Sized {
         (self.x().powi(2) + self.y().powi(2) + self.z().powi(2)).sqrt()
     }
 
-    fn add<T: Vec3>(&self, other: &T) -> Self {
+    fn add<T: Vec3>(self, rhs: T) -> Self {
         Self::new(
-            self.x() + other.x(),
-            self.y() + other.y(),
-            self.z() + other.z(),
+            self.x() + rhs.x(),
+            self.y() + rhs.y(),
+            self.z() + rhs.z(),
         )
     }
 
-    fn sub<T: Vec3>(&self, other: &T) -> Self {
+    fn sub<T: Vec3>(self, rhs: T) -> Self {
         Self::new(
-            self.x() - other.x(),
-            self.y() - other.y(),
-            self.z() - other.z(),
+            self.x() - rhs.x(),
+            self.y() - rhs.y(),
+            self.z() - rhs.z(),
         )
     }
 
-    fn mul(&self, factor: f32) -> Self {
+    fn mul(self, rhs: f32) -> Self {
         Self::new(
-            self.x() * factor,
-            self.y() * factor,
-            self.z() * factor,
+            self.x() * rhs,
+            self.y() * rhs,
+            self.z() * rhs,
         )
     }
 
-    fn div(&self, factor: f32) -> Self {
+    fn div(self, rhs: f32) -> Self {
         Self::new(
-            self.x() / factor,
-            self.y() / factor,
-            self.z() / factor,
+            self.x() / rhs,
+            self.y() / rhs,
+            self.z() / rhs,
         )
     }
 
-    fn abs(&self) -> Self {
+    fn abs(self) -> Self {
         Self::new(self.x().abs(), self.y().abs(), self.z().abs())
     }
 
-    fn into<T: Vec3>(self) -> T {
+    // Note: std::convert::Into can not be implemented for a type parameter.
+    fn into2<T: Vec3>(&self) -> T {
         T::new(self.x(), self.y(), self.z())
     }
 }
