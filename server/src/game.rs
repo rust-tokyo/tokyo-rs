@@ -1,5 +1,8 @@
-use common::models::{BulletState, GameCommand, GameState, PlayerState};
+use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, Triangle};
 use std::collections::{HashMap, HashSet};
+use std::time::{Duration, SystemTime};
+
+const DEAD_PUNISH: Duration = Duration::from_secs(5);
 
 const BULLET_SPEED: f32 = 10.0;
 const BULLET_RADIUS: f32 = 2.0;
@@ -71,6 +74,16 @@ impl Game {
     pub fn init(&mut self) {}
 
     pub fn tick(&mut self, _dt: f32) {
+        // Revive the dead
+        let now = SystemTime::now();
+        let revived = self.state.dead
+            .drain_filter(|corpse| corpse.respawn <= now)
+            .map(|dead| dead.player)
+            .map(|player| { println!("revived player {}", player.id); player });
+
+        self.state.players.extend(revived);
+
+        // Advance bullets
         for bullet in &mut self.state.bullets {
             let (vel_x, vel_y) = angle_to_vector(bullet.angle);
 
@@ -86,66 +99,24 @@ impl Game {
             b.y < (BOUNDS_BOTTOM + BULLET_RADIUS)
         });
 
-        // TODO(bschwind) - find and remove bullet/player intersection pairs
+        // count the dead
         for bullet in &mut self.state.bullets {
-            for player in &mut self.state.players {
-                if circles_collide((bullet.x, bullet.y), BULLET_RADIUS, (player.x, player.y), PLAYER_RADIUS) && bullet.player_id != player.id {
-                    println!("Bullet {} collided with player {} at ({}, {})", bullet.id, player.id, bullet.x, bullet.y);
-                }
+            let deceased = self.state.players.drain_filter(|player| {
+                let kill = player.is_colliding(bullet) && bullet.player_id != player.id;
+                if kill { println!("Bullet {} collided with player {} at ({}, {})", bullet.id, player.id, bullet.x, bullet.y); }
+                kill
+            });
+            for player in deceased {
+                self.state.dead.push(DeadPlayer {
+                    respawn: SystemTime::now() + DEAD_PUNISH,
+                    player
+                });
             }
         }
     }
 }
 
-fn circles_collide((x1, y1): (f32, f32), r1: f32, (x2, y2): (f32, f32), r2: f32) -> bool {
-    let squared_dist = ((x2-x1) * (x2-x1)) + ((y2-y1) * (y2-y1));
-    let squared_radii = (r1 + r2) * (r1 + r2);
-
-    squared_dist < squared_radii
-}
-
-#[test]
-fn test_circles_collide() {
-    let p1 = (0.0, 0.0);
-    let r1 = 1.0;
-
-    let p2 = (2.0, 0.0);
-    let r2 = 1.0;
-
-    assert!(!circles_collide(p1, r1, p2, r2));
-
-    let p1 = (0.0, 0.0);
-    let r1 = 1.1;
-
-    let p2 = (2.0, 0.0);
-    let r2 = 1.0;
-
-    assert!(circles_collide(p1, r1, p2, r2));
-
-    let p1 = (0.0, 0.0);
-    let r1 = 3.0;
-
-    let p2 = (6.0, 0.0);
-    let r2 = 3.0;
-
-    assert!(!circles_collide(p1, r1, p2, r2));
-
-    let p1 = (0.0, 0.0);
-    let r1 = 1.0;
-
-    let p2 = (2.0, 2.0);
-    let r2 = 1.0;
-
-    assert!(!circles_collide(p1, r1, p2, r2));
-
-    let p1 = (5.0, 4.0);
-    let r1 = 7.4;
-
-    let p2 = (-2.0, -0.3);
-    let r2 = 1.0;
-
-    assert!(circles_collide(p1, r1, p2, r2));
-}
+// TODO(jake): rewrite tests.... maybe
 
 fn angle_to_vector(angle: f32) -> (f32, f32) {
     (angle.cos(), angle.sin())

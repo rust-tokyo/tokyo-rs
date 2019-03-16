@@ -91,7 +91,7 @@ where
 
     let client_state = Arc::new(Mutex::new(ClientState {
         id: 0,
-        game_state: GameState { players: vec![], bullets: vec![], scoreboard: HashMap::new() },
+        game_state: GameState::default(),
     }));
 
     let client = tokio_ws::connect_async(url)
