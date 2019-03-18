@@ -1,8 +1,9 @@
-use std::{time::Instant, collections::HashMap};
-
+use crate::{
+    geom::*,
+    util::{Bullet, Player},
+};
 use common::models::GameState;
-
-use crate::util::{Player, Bullet};
+use std::{collections::HashMap, time::Instant};
 
 pub struct Radar {
     own_player_id: u32,
@@ -32,7 +33,11 @@ impl Radar {
         }
         self.players = players;
 
-        self.bullets = state.bullets.iter().map(|state| Bullet::new(&state)).collect();
+        self.bullets = state
+            .bullets
+            .iter()
+            .map(|state| Bullet::new(&state))
+            .collect();
     }
 
     pub fn player<'a>(&'a self, id: u32) -> &'a Player {
@@ -47,11 +52,13 @@ impl Radar {
         self.player(self.own_player_id)
     }
 
-    pub fn angle_to(&self, target: u32) -> f32 {
-        self.own_player().position.angle_to(&self.player(target).position)
+    pub fn angle_to(&self, target: u32) -> Radian {
+        self.own_player()
+            .position
+            .angle_to(&self.player(target).position)
     }
 
-    pub fn bullets_to_collide(&self, until: Instant) -> Vec<Bullet> {
+    pub fn bullets_to_collide(&self, _until: Instant) -> Vec<Bullet> {
         // TODO
         unimplemented!();
     }

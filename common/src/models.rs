@@ -3,9 +3,10 @@ use std::collections::HashMap;
 use std::time::{SystemTime, Duration};
 
 pub const BULLET_RADIUS: f32 = 2.0;
+pub const BULLET_SPEED: f32 = 10.0;
 pub const PLAYER_RADIUS: f32 = 10.0;
-pub const MIN_SPEED: f32 = -1.0;
-pub const MAX_SPEED: f32 = 1.0;
+pub const PLAYER_MIN_SPEED: f32 = -1.0;
+pub const PLAYER_MAX_SPEED: f32 = 1.0;
 
 // Send commands more frequently than this interval, and consequences.
 pub const MIN_COMMAND_INTERVAL: Duration = Duration::from_millis(100);

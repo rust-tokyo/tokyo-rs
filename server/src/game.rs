@@ -1,11 +1,7 @@
-use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState};
+use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, BULLET_SPEED, BULLET_RADIUS, PLAYER_RADIUS};
 use std::time::{Duration, SystemTime};
 
 const DEAD_PUNISH: Duration = Duration::from_secs(5);
-
-const BULLET_SPEED: f32 = 10.0;
-const BULLET_RADIUS: f32 = 2.0;
-const PLAYER_RADIUS: f32 = 10.0;
 
 const BOUNDS: (f32, f32) = (1024.0, 512.0);
 

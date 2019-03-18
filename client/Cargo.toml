@@ -10,16 +10,9 @@ license = "Unlicense"
 categories = []
 readme = "README.md"
 
-[[bin]]
-name = "examples-simple"
-path = "examples/simple.rs"
-
-[[bin]]
-name = "examples-chaser"
-path = "examples/chaser.rs"
-
 [dependencies]
 common = { path = "../common" }
+euclid = "0.19.6"
 failure = "0.1"
 futures = "0.1"
 log = "0.4"

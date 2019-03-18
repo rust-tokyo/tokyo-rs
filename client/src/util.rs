@@ -1,85 +1,14 @@
-use std::{time::{Instant, Duration}, collections::HashMap};
-
-use common::{models::{BulletState, PlayerState}, vec::Vec2};
-
-pub trait AsSecsF32 {
-    fn as_secs_f32(&self) -> f32;
-}
-
-impl AsSecsF32 for Duration {
-    fn as_secs_f32(&self) -> f32 {
-        self.as_nanos() as f32 / 1e9
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Position {
-    pub x: f32,
-    pub y: f32,
-}
-
-impl Position {
-    pub fn distance(&self, other: &Position) -> f32 {
-        other.sub(self).magnitude()
-    }
-
-    pub fn angle_to(&self, other: &Position) -> f32 {
-        other.sub(self).angle()
-    }
-
-    pub fn velocity_to(&self, other: &Position, dt: Duration) -> Velocity {
-        other.sub(self).div(dt.as_secs_f32()).into2()
-    }
-
-    pub fn project(&self, vel: &Velocity, time: Duration) -> Position {
-        self.add(&vel.mul(time.as_secs_f32()))
-    }
-}
-
-impl Vec2 for Position {
-    fn new(x: f32, y: f32) -> Self {
-        Self { x, y }
-    }
-
-    fn x(&self) -> f32 {
-        self.x
-    }
-
-    fn y(&self) -> f32 {
-        self.y
-    }
-}
-
-#[derive(Clone, Debug)]
-pub struct Velocity {
-    pub dx: f32, // per second
-    pub dy: f32, // per second
-}
-
-impl Velocity {
-    pub fn with_angle_speed(angle: f32, speed: f32) -> Self {
-        Velocity::with_angle(angle).mul(speed)
-    }
-}
-
-impl Vec2 for Velocity {
-    fn new(x: f32, y: f32) -> Self {
-        Self { dx: x, dy: y }
-    }
-
-    fn x(&self) -> f32 {
-        self.dx
-    }
-
-    fn y(&self) -> f32 {
-        self.dy
-    }
-}
+use crate::geom::*;
+use common::models::{BulletState, PlayerState, BULLET_SPEED};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
 
 pub struct Player {
     pub id: u32,
-    pub angle: f32,
-    pub position: Position,
+    pub angle: Radian,
+    pub position: Point,
     pub trajectory: Trajectory,
     pub score_history: ScoreHistory,
     last_update: Instant,
@@ -89,8 +18,8 @@ impl Player {
     pub fn new() -> Self {
         Self {
             id: 0,
-            angle: 0.0,
-            position: Position::new(0.0, 0.0),
+            angle: Radian::zero(),
+            position: Point::zero(),
             trajectory: Trajectory::new(),
             score_history: ScoreHistory::new(),
             last_update: Instant::now(),
@@ -98,7 +27,7 @@ impl Player {
     }
 
     pub fn with_state(state: &PlayerState, scoreboard: &HashMap<u32, u32>, time: Instant) -> Self {
-        let position = Position::new(state.x, state.y);
+        let position = Point::new(state.x, state.y);
 
         let mut trajectory = Trajectory::new();
         trajectory.push(position.clone(), time);
@@ -108,7 +37,7 @@ impl Player {
 
         Self {
             id: state.id,
-            angle: state.angle,
+            angle: Radian::new(state.angle),
             position,
             trajectory,
             score_history,
@@ -116,11 +45,16 @@ impl Player {
         }
     }
 
-    pub fn push_state(&mut self, state: &PlayerState, scoreboard: &HashMap<u32, u32>, time: Instant) {
+    pub fn push_state(
+        &mut self,
+        state: &PlayerState,
+        scoreboard: &HashMap<u32, u32>,
+        time: Instant,
+    ) {
         assert_eq!(self.id, state.id);
 
-        self.angle = state.angle;
-        self.position = Position::new(state.x, state.y);
+        self.angle = Radian::new(state.angle);
+        self.position = Point::new(state.x, state.y);
         self.trajectory.push(self.position.clone(), time);
         self.score_history
             .push(*scoreboard.get(&state.id).unwrap(), time);
@@ -129,7 +63,7 @@ impl Player {
 }
 
 pub struct Trajectory {
-    pub positions: Vec<(Position, Instant)>,
+    pub positions: Vec<(Point, Instant)>,
 }
 
 impl Trajectory {
@@ -139,40 +73,41 @@ impl Trajectory {
         }
     }
 
-    pub fn push(&mut self, position: Position, time: Instant) {
+    pub fn push(&mut self, position: Point, time: Instant) {
         self.positions.push((position, time));
     }
 
-    pub fn last_position<'a>(&'a self) -> &'a Position {
+    pub fn last_position<'a>(&'a self) -> &'a Point {
         &self.positions.last().unwrap().0
     }
 
-    pub fn last_velocity(&self) -> Velocity {
+    pub fn last_velocity(&self) -> Vector {
         let (last_position, last_time) = self.positions.last().unwrap();
         if let Some((prev_position, prev_time)) = self.positions.get(self.positions.len() - 2) {
             prev_position.velocity_to(last_position, *last_time - *prev_time)
         } else {
             // No idea, just return zeros.
-            Velocity::zeros()
+            Vector::zero()
         }
     }
 
     // Some indication of the player's desire to move.
-    pub fn ave_abs_velocity(&self) -> Velocity {
-        if self.positions.len() < 2 {
-            return Velocity::zeros();
-        }
+    pub fn ave_abs_velocity(&self) -> Vector {
+        let (items, sum) = self
+            .positions
+            .iter()
+            .zip(self.positions.iter().skip(1))
+            .map(|((prev_position, prev_time), (position, time))| {
+                prev_position
+                    .velocity_to(position, *time - *prev_time)
+                    .abs()
+            })
+            .fold((0, Vector::zero()), |acc, next| (acc.0 + 1, acc.1 + next));
 
-        let mut velocities = Vec::new();
-        for ((prev_position, prev_time), (position, time)) in
-            self.positions.iter().zip(self.positions.iter().skip(1))
-        {
-            velocities.push(prev_position.velocity_to(position, *time - *prev_time).abs());
-        }
-
-        Velocity {
-            dx: velocities.iter().map(|v| v.dx).sum::<f32>() / velocities.len() as f32,
-            dy: velocities.iter().map(|v| v.dy).sum::<f32>() / velocities.len() as f32,
+        if items == 0 {
+            Vector::zero()
+        } else {
+            sum / items as f32
         }
     }
 }
@@ -214,19 +149,16 @@ impl ScoreHistory {
 }
 
 pub struct Bullet {
-    pub position: Position,
-    pub velocity: Velocity,
+    pub position: Point,
+    pub velocity: Vector,
     pub player_id: u32,
 }
 
 impl Bullet {
     pub fn new(state: &BulletState) -> Self {
-        // TODO(ryo): Align with server implementation.
-        const BULLET_SPEED: f32 = 1.0;
-
         Bullet {
-            position: Position::new(state.x, state.y),
-            velocity: Velocity::with_angle_speed(state.angle, BULLET_SPEED),
+            position: Point::new(state.x, state.y),
+            velocity: Vector::with_angle(state.angle) * BULLET_SPEED,
             player_id: state.player_id,
         }
     }

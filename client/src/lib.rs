@@ -8,6 +8,7 @@ use std::{
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
 
+pub mod geom;
 pub mod radar;
 pub mod strategy;
 pub mod util;
@@ -70,10 +71,10 @@ where
             match server_to_client_msg {
                 ServerToClient::Id(player_id) => {
                     (*client_state).lock().unwrap().id = player_id;
-                },
+                }
                 ServerToClient::GameState(state) => {
                     (*client_state).lock().unwrap().game_state = state;
-                },
+                }
             }
 
             Ok(())

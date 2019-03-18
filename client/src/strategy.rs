@@ -1,16 +1,10 @@
+use crate::{geom::*, radar::Radar};
+use common::models::{ClientState, GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
+use rand::{thread_rng, Rng};
 use std::{
     collections::VecDeque,
-    ops::Sub,
     time::{Duration, Instant},
 };
-
-use common::{
-    models::{ClientState, GameCommand, MAX_SPEED, MIN_SPEED},
-    vec::Vec2,
-};
-use rand::{thread_rng, Rng};
-
-use crate::radar::Radar;
 
 type BehaviorVec = Vec<(Behavior, Box<Condition>)>;
 
@@ -47,23 +41,25 @@ impl Strategy {
                     1 => Some(GameCommand::Rotate(
                         rng.gen_range(0.0, 2.0 * std::f32::consts::PI),
                     )),
-                    2 => Some(GameCommand::Forward(rng.gen_range(MIN_SPEED, MAX_SPEED))),
+                    2 => Some(GameCommand::Forward(
+                        rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED),
+                    )),
                     3 => Some(GameCommand::Fire),
                     _ => unreachable!(),
                 }
             }
             Behavior::ChaseFor(target) => {
                 let angle = self.radar.angle_to(target);
-                if self.radar.own_player().angle.sub(angle).abs() > 10.0 {
-                    Some(GameCommand::Rotate(angle))
+                if (self.radar.own_player().angle - angle).abs().get() > 10.0 {
+                    Some(GameCommand::Rotate(angle.positive().get()))
                 } else {
-                    Some(GameCommand::Forward(MAX_SPEED))
+                    Some(GameCommand::Forward(PLAYER_MAX_SPEED))
                 }
             }
             Behavior::FireAt(target) => {
                 let angle = self.radar.angle_to(target);
-                if self.radar.own_player().angle.sub(angle).abs() > 1.0 {
-                    Some(GameCommand::Rotate(angle))
+                if (self.radar.own_player().angle - angle).abs().get() > 1.0 {
+                    Some(GameCommand::Rotate(angle.positive().get()))
                 } else {
                     Some(GameCommand::Fire)
                 }
@@ -76,10 +72,12 @@ impl Strategy {
                 if let Some(bullet) = self.radar.bullets_to_collide(dodge_until).iter().next() {
                     // Move 2 step forward to the direction to move away from the bullet trajectory.
                     self.next_commands
-                        .push_back(GameCommand::Forward(MAX_SPEED));
+                        .push_back(GameCommand::Forward(PLAYER_MAX_SPEED));
                     self.next_commands
-                        .push_back(GameCommand::Forward(MAX_SPEED));
-                    Some(GameCommand::Rotate(bullet.velocity.tangent()))
+                        .push_back(GameCommand::Forward(PLAYER_MAX_SPEED));
+                    Some(GameCommand::Rotate(
+                        bullet.velocity.tangent().positive().get(),
+                    ))
                 } else {
                     None
                 }
