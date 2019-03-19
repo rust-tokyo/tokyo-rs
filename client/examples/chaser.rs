@@ -1,6 +1,6 @@
 use std::time::Instant;
 use common::models::*;
-use tokyo::{self, Handler, strategy::{Chase, Behavior}, analyzer::Analyzer};
+use tokyo::{self, Handler, strategy::{behavior::{Chase, Behavior}}, analyzer::Analyzer};
 
 struct Player {
     analyzer: Analyzer,
