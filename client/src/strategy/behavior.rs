@@ -1,9 +1,9 @@
 use crate::{analyzer::Analyzer, geom::*, strategy::target::Target};
 use common::models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
 use rand::{thread_rng, Rng};
-use std::{collections::VecDeque, time::Duration};
+use std::{collections::VecDeque, time::Duration, fmt::Debug};
 
-pub trait Behavior: Send {
+pub trait Behavior: Send + Debug {
     fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand>;
     fn box_clone(&self) -> Box<Behavior>;
 }
@@ -14,7 +14,7 @@ impl Clone for Box<Behavior> {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Sequence {
     inner: VecDeque<Box<Behavior>>,
 }
@@ -58,7 +58,7 @@ impl Sequence {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Noop;
 
 impl Behavior for Noop {
@@ -71,7 +71,7 @@ impl Behavior for Noop {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Forward {
     pub distance: f32,
 }
@@ -98,7 +98,7 @@ impl Forward {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Rotate {
     angle: Radian,
     margin: Radian,
@@ -106,7 +106,7 @@ pub struct Rotate {
 
 impl Behavior for Rotate {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
-        if (analyzer.own_player().angle - self.angle).abs() > self.margin {
+        if (analyzer.own_player().angle.positive() - self.angle.positive()).abs() > self.margin {
             Some(GameCommand::Rotate(self.angle.positive().get()))
         } else {
             None
@@ -128,7 +128,7 @@ impl Rotate {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Fire {
     pub times: u32,
 }
@@ -154,7 +154,7 @@ impl Fire {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct FireAt {
     pub target: Target,
     pub times: u32,
@@ -168,14 +168,14 @@ impl Behavior for FireAt {
         }
 
         if self.times > 0 {
-            self.times -= 1;
-            let target = self.target.get(analyzer);
-            let angle = analyzer.own_player().angle_to(target);
-            self.next = Sequence::two(Rotate::with_margin_degrees(angle, 5.0), Fire::once());
-            self.next.next_command(analyzer)
-        } else {
-            None
+            if let Some(target) = self.target.get(analyzer) {
+                self.times -= 1;
+                let angle = analyzer.own_player().angle_to(target);
+                self.next = Sequence::two(Rotate::with_margin_degrees(angle, 5.0), Fire::once());
+                return self.next.next_command(analyzer);
+            }
         }
+        None
     }
 
     fn box_clone(&self) -> Box<Behavior> {
@@ -194,7 +194,7 @@ impl FireAt {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 struct Random;
 
 impl Behavior for Random {
@@ -214,22 +214,23 @@ impl Behavior for Random {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Chase {
     pub target: Target,
+    pub reach: f32,
 }
 
 impl Behavior for Chase {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
-        let target = self.target.get(analyzer);
-        let distance_to_target = target.position.distance(&analyzer.own_player().position);
-        if distance_to_target > 10.0 {
-            let angle = analyzer.own_player().angle_to(target);
-            Sequence::two(Rotate::with_margin_degrees(angle, 10.0), Forward::with_steps(1))
-                .next_command(analyzer)
-        } else {
-            None
+        if let Some(target) = self.target.get(analyzer) {
+            let distance_to_target = analyzer.own_player().distance(target);
+            if distance_to_target > self.reach {
+                let angle = analyzer.own_player().angle_to(target);
+                return Sequence::two(Rotate::with_margin_degrees(angle, 10.0), Forward::with_steps(1))
+                    .next_command(analyzer);
+            }
         }
+        None
     }
 
     fn box_clone(&self) -> Box<Behavior> {
@@ -237,7 +238,7 @@ impl Behavior for Chase {
     }
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct Dodge;
 
 impl Behavior for Dodge {

@@ -8,6 +8,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+#[derive(Debug)]
 pub struct Player {
     pub id: u32,
     pub angle: Radian,
@@ -34,7 +35,7 @@ impl Player {
         trajectory.push(position.clone(), time);
 
         let mut score_history = ScoreHistory::new();
-        score_history.push(*scoreboard.get(&state.id).unwrap(), time);
+        score_history.push(*scoreboard.get(&state.id).unwrap_or(&0), time);
 
         Self {
             id: state.id,
@@ -57,7 +58,7 @@ impl Player {
         self.position = Point::new(state.x, state.y);
         self.trajectory.push(self.position.clone(), time);
         self.score_history
-            .push(*scoreboard.get(&state.id).unwrap(), time);
+            .push(*scoreboard.get(&state.id).unwrap_or(&0), time);
     }
 
     pub fn score(&self) -> u32 {
@@ -82,6 +83,7 @@ impl PointExt for Player {
     }
 }
 
+#[derive(Debug)]
 pub struct Trajectory {
     pub positions: Vec<(Point, Instant)>,
 }
@@ -132,6 +134,7 @@ impl Trajectory {
     }
 }
 
+#[derive(Debug)]
 pub struct ScoreHistory {
     inner: Vec<(u32, Instant)>,
 }

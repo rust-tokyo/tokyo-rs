@@ -2,7 +2,7 @@ use crate::analyzer::{Analyzer, player::Player};
 use std::time::Duration;
 
 /// Target player.
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub enum Target {
     Id(u32),
 
@@ -20,7 +20,7 @@ pub enum Target {
 }
 
 impl Target {
-    pub fn get<'a>(&self, analyzer: &'a Analyzer) -> &'a Player {
+    pub fn get<'a>(&self, analyzer: &'a Analyzer) -> Option<&'a Player> {
         match self {
             Target::Id(id) => analyzer.player(*id),
             Target::Closest => analyzer.player_closest(),

@@ -1,10 +1,11 @@
 use crate::analyzer::Analyzer;
-use std::time::{Duration, Instant};
+use std::{time::{Duration, Instant}, fmt::Debug};
 
-pub trait Condition: Send {
+pub trait Condition: Send + Debug {
     fn evaluate(&mut self, _: &Analyzer) -> bool;
 }
 
+#[derive(Debug)]
 pub struct Always;
 impl Condition for Always {
     fn evaluate(&mut self, _: &Analyzer) -> bool {
@@ -12,38 +13,42 @@ impl Condition for Always {
     }
 }
 
-pub struct And<T1, T2> {
+#[derive(Debug)]
+pub struct And<T1: Debug, T2: Debug> {
     lhs: T1,
     rhs: T2,
 }
 
-impl<T1: Condition, T2: Condition> Condition for And<T1, T2> {
+impl<T1: Condition + Debug, T2: Condition + Debug> Condition for And<T1, T2> {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
         self.lhs.evaluate(analyzer) && self.rhs.evaluate(analyzer)
     }
 }
 
-pub struct Or<T1, T2> {
+#[derive(Debug)]
+pub struct Or<T1: Debug, T2: Debug> {
     lhs: T1,
     rhs: T2,
 }
 
-impl<T1: Condition, T2: Condition> Condition for Or<T1, T2> {
+impl<T1: Condition + Debug, T2: Condition + Debug> Condition for Or<T1, T2> {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
         self.lhs.evaluate(analyzer) || self.rhs.evaluate(analyzer)
     }
 }
 
-pub struct Not<T> {
+#[derive(Debug)]
+pub struct Not<T: Debug> {
     inner: T,
 }
 
-impl<T: Condition> Condition for Not<T> {
+impl<T: Condition + Debug> Condition for Not<T> {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
         !self.inner.evaluate(analyzer)
     }
 }
 
+#[derive(Debug)]
 pub struct AtInterval {
     interval: Duration,
     next: Instant,
@@ -70,6 +75,7 @@ impl AtInterval {
     }
 }
 
+#[derive(Debug)]
 pub struct PlayerWithin {
     pub radius: f32
 }
@@ -80,13 +86,16 @@ impl Condition for PlayerWithin {
     }
 }
 
+#[derive(Debug)]
 pub struct PlayerWithHigherScore;
+
 impl Condition for PlayerWithHigherScore {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
-        analyzer.player_highest_score().id != analyzer.own_player().id
+        analyzer.player_highest_score().is_some()
     }
 }
 
+#[derive(Debug)]
 pub struct BulletWithin {
     pub radius: f32
 }

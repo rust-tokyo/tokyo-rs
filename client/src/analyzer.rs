@@ -14,6 +14,7 @@ pub mod player;
 // Collision detection etc is done at this compute interval.
 pub const ANALYSIS_INTERVAL: Duration = Duration::from_millis(33);
 
+#[derive(Debug)]
 pub struct Analyzer {
     own_player_id: u32,
     players: HashMap<u32, Player>,
@@ -57,48 +58,57 @@ impl Analyzer {
         self.own_player_id = id;
     }
 
-    pub fn player<'a>(&'a self, id: u32) -> &'a Player {
-        self.players.get(&id).unwrap()
+    pub fn player(&self, id: u32) -> Option<&Player> {
+        self.players.get(&id)
     }
 
-    pub fn own_player<'a>(&'a self) -> &'a Player {
-        self.player(self.own_player_id)
+    // TODO: clean up.
+    pub fn is_dead(&self) -> bool {
+        !self.players.contains_key(&self.own_player_id)
     }
 
-    pub fn player_closest(&self) -> &Player {
-        let my_position = self.own_player().position;
-        self.players
-            .values()
-            .max_by_key(|player| (my_position.distance(&player.position) * 1e3) as u64)
-            .unwrap()
+    pub fn own_player(&self) -> &Player {
+        self.player(self.own_player_id).unwrap()
     }
 
-    pub fn player_least_moving(&self) -> &Player {
-        self.players
-            .values()
+    // TODO: return iterator.
+    pub fn other_players(&self) -> Vec<&Player> {
+        self.players.values().filter(|player| player.id != self.own_player_id).collect::<Vec<_>>()
+    }
+
+    pub fn player_closest(&self) -> Option<&Player> {
+        self.other_players()
+            .iter()
+            .max_by_key(|player| (self.own_player().distance(**player) * 1e3) as u64)
+            .map(|player| *player)
+    }
+
+    pub fn player_least_moving(&self) -> Option<&Player> {
+        self.other_players()
+            .iter()
             .min_by_key(|player| (player.trajectory.ave_abs_velocity().length() * 1e3) as u64)
-            .unwrap()
+            .map(|player| *player)
     }
 
-    pub fn player_highest_score(&self) -> &Player {
-        self.players
-            .values()
+    pub fn player_highest_score(&self) -> Option<&Player> {
+        self.other_players()
+            .iter()
             .max_by_key(|player| player.score())
-            .unwrap()
+            .map(|player| *player)
     }
 
-    pub fn player_highest_score_after(&self, after: Duration) -> &Player {
-        self.players
-            .values()
+    pub fn player_highest_score_after(&self, after: Duration) -> Option<&Player> {
+        self.other_players()
+            .iter()
             .max_by_key(|player| player.score_history.project(after))
-            .unwrap()
+            .map(|player| *player)
     }
 
     pub fn players_within(&self, radius: f32) -> Vec<&Player> {
-        let my_position = self.own_player().position;
-        self.players
-            .values()
-            .filter(|player| my_position.distance(&player.position) <= radius)
+        self.other_players()
+            .iter()
+            .filter(|player| self.own_player().distance(**player) <= radius)
+            .map(|player| *player)
             .collect::<Vec<_>>()
     }
 
@@ -113,10 +123,9 @@ impl Analyzer {
     }
 
     pub fn bullets_within(&self, radius: f32) -> Vec<&Bullet> {
-        let my_position = self.own_player().position;
         self.bullets
             .iter()
-            .filter(|bullet| my_position.distance(&bullet.position) <= radius)
+            .filter(|bullet| self.own_player().distance(*bullet) <= radius)
             .collect::<Vec<_>>()
     }
 }

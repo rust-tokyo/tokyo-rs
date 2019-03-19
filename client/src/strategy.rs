@@ -10,6 +10,7 @@ pub mod behavior;
 pub mod condition;
 pub mod target;
 
+#[derive(Debug)]
 pub struct Strategy {
     tree: StrategyNode,
 }
@@ -26,6 +27,7 @@ impl Strategy {
     }
 }
 
+#[derive(Debug)]
 pub enum StrategyNode {
     Branch(Vec<(Box<Condition>, Box<StrategyNode>)>),
     Leaf(PrioritizedBehavior),
@@ -47,14 +49,14 @@ impl StrategyNode {
     }
 }
 
-#[derive(Clone, PartialEq, PartialOrd)]
+#[derive(Clone, PartialEq, PartialOrd, Debug)]
 pub enum Priority {
     Low = 0,
     Medium = 1,
     High = 2,
 }
 
-#[derive(Clone)]
+#[derive(Clone, Debug)]
 pub struct PrioritizedBehavior {
     pub priority: Priority,
     pub behavior: Box<Behavior>,

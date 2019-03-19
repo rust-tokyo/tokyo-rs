@@ -2,6 +2,7 @@ use crate::geom::*;
 use common::models::{BulletState, BULLET_SPEED};
 use std::time::Duration;
 
+#[derive(Debug)]
 pub struct Bullet {
     pub position: Point,
     pub velocity: Vector,

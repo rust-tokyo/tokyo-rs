@@ -26,7 +26,7 @@ impl Player {
             // Shoots at an enemy only if it's very close; otherwise keep dodging.
             strategy: Strategy::new(vec![
                 (
-                    Box::new(PlayerWithin { radius: 20.0 }),
+                    Box::new(PlayerWithin { radius: 100.0 }),
                     Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_high(
                         FireAt::once(Target::Closest),
                     ))),
@@ -47,6 +47,9 @@ impl Handler for Player {
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand> {
         self.analyzer.set_own_player_id(state.id);
         self.analyzer.push_state(&state.game_state, Instant::now());
+        if self.analyzer.is_dead() {
+            return None;
+        }
 
         let next_command = self.current_behavior.behavior.next_command(&self.analyzer);
         if let Some(next_behavior) = self.strategy.next_behavior(&self.analyzer) {
@@ -63,7 +66,7 @@ fn main() {
     println!("starting up...");
     tokyo::run(
         "403B9A2F-103F-4E43-8B52-1AC4870AA1E3",
-        "H4CK TH3 PL4N3T",
+        "PEACEFUL",
         Player::new(),
     )
     .unwrap();
