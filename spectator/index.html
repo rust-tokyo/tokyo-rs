@@ -21,11 +21,20 @@
                 font: inherit;
                 vertical-align: baseline;
                 overflow:hidden;
+                font-family: monospace;
+                color: white;
+            }
+
+            #websocket-status {
+                border: 1px solid orange;
+                padding: 3px;
+                display: block;
+                position: absolute;
+                top: 10;
+                right: 0;
             }
 
             #scoreboard {
-                font-family: monospace;
-                color: white;
                 display: block;
                 position: absolute;
                 top: 10;
@@ -48,10 +57,14 @@
             <h1>Scores</h1>
             <pre id="chart"></pre>
         </div>
+        <div id="websocket-status">
+            disconnected
+        </div>
 
         <script>
             const SHIP_SIZE = 18;
             const BULLET_SIZE = 3;
+            var websocket_status = document.getElementById("websocket-status");
             var scoreboard = document.getElementById("scoreboard");
             var scoreboard_chart = document.getElementById("chart");
             var c = document.getElementById("canvas");
@@ -63,10 +76,35 @@
 
             var ctx = c.getContext("2d");
 
-            const socket = new WebSocket('ws://localhost:3000/spectate');
-            socket.addEventListener('open', function (event) {
-                console.log("connected!");
-            });
+            function connect(handler) {
+                websocket_status.innerText = "connecting...";
+                websocket_status.style.borderColor = "gray";
+
+                const socket = new WebSocket('ws://localhost:3000/spectate');
+                socket.addEventListener('open', function (event) {
+                    websocket_status.innerText = "connected";
+                    websocket_status.style.borderColor = "white";
+                });
+
+                socket.addEventListener('close', function (event) {
+                    websocket_status.innerText = "disconnected";
+                    websocket_status.style.borderColor = "orange";
+                    setTimeout(function() {
+                        connect(handler);
+                    }, 1000);
+                });
+
+                socket.addEventListener('error', function (event) {
+                    websocket_status.innerText = "error!";
+                    websocket_status.style.borderColor = "red";
+                    socket.close();
+                });
+
+                socket.addEventListener('message', function (event) {
+                    let json = JSON.parse(event.data);
+                    handler(json);
+                });
+            }
 
             class Ship {
                 constructor(obj) {
@@ -148,9 +186,7 @@
                 }
             }
 
-            // Listen for messages
-            socket.addEventListener('message', function (event) {
-                let json = JSON.parse(event.data);
+            connect(function (json) {
                 if (json.e === "teamnames") {
                     team_names = json.data;
                     console.log("got new team_names", team_names);
