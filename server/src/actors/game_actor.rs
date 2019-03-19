@@ -1,6 +1,6 @@
 use crate::{
     actors::ClientWsActor,
-    game::Game,
+    game::{Game, TICKS_PER_SECOND},
     models::messages::{ClientStop, PlayerGameCommand},
 };
 use actix::{Actor, Addr, AsyncContext, Context, Handler, Message};
@@ -53,9 +53,7 @@ fn game_loop(
     msg_chan: Receiver<GameLoopCommand>,
     mut cancel_chan: oneshot::Receiver<()>,
 ) {
-    let target_update_per_second = 30;
-
-    let mut loop_helper = LoopHelper::builder().build_with_target_rate(target_update_per_second);
+    let mut loop_helper = LoopHelper::builder().build_with_target_rate(TICKS_PER_SECOND);
 
     let mut game = Game::default();
 
@@ -86,7 +84,7 @@ fn game_loop(
             }
         }
 
-        let dt = 1.0 / target_update_per_second as f32;
+        let dt = 1.0 / TICKS_PER_SECOND;
         game.tick(dt);
 
         // Send out update packets
