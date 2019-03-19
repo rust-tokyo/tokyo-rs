@@ -93,7 +93,7 @@ where
     H: Handler + Send + 'static,
 {
     let url = Url::parse(&format!(
-        "ws://127.0.0.1:3000/socket?key={}&name={}",
+        "ws://192.168.0.199/socket?key={}&name={}",
         key,
         utf8_percent_encode(name, DEFAULT_ENCODE_SET).to_string()
     ))?;

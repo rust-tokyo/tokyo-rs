@@ -222,7 +222,7 @@
                     var sorted_players = Object.keys(data.scoreboard).sort(function(a,b){return data.scoreboard[b]-data.scoreboard[a]});
                     chart.innerHTML = "";
                     for (const player_id of sorted_players) {
-                        chart.innerHTML += `<span class="score">${data.scoreboard[player_id]}</span> - <span class="team"><span class="name">${team_names[player_id]}</span> <span class="id">${player_id}</span></span>\n`;
+                        chart.innerHTML += `<span class="score">${data.scoreboard[player_id].padEnd(3)}</span> - <span class="team"><span class="name">${team_names[player_id]}</span> <span class="id">${player_id}</span></span>\n`;
                     }
                 }
             });
