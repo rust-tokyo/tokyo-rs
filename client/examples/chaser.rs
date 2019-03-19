@@ -11,6 +11,7 @@ impl Player {
     fn new() -> Self {
         Self {
             analyzer: Analyzer::new(),
+            // Keep chasing a player with the highest score.
             behavior: Chase { target: Target::HighestScore },
         }
     }

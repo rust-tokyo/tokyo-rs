@@ -1,6 +1,9 @@
 use crate::{
     analyzer::Analyzer,
-    strategy::{behavior::Behavior, condition::Condition},
+    strategy::{
+        behavior::{Behavior, Noop},
+        condition::Condition,
+    },
 };
 
 pub mod behavior;
@@ -18,18 +21,18 @@ impl Strategy {
         }
     }
 
-    pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<(Priority, Box<Behavior>)> {
+    pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<PrioritizedBehavior> {
         self.tree.next_behavior(analyzer)
     }
 }
 
 pub enum StrategyNode {
     Branch(Vec<(Box<Condition>, Box<StrategyNode>)>),
-    Leaf((Priority, Box<Behavior>)),
+    Leaf(PrioritizedBehavior),
 }
 
 impl StrategyNode {
-    pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<(Priority, Box<Behavior>)> {
+    pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<PrioritizedBehavior> {
         match self {
             StrategyNode::Branch(nodes) => {
                 for (condition, node) in nodes.iter_mut() {
@@ -49,4 +52,40 @@ pub enum Priority {
     Low = 0,
     Medium = 1,
     High = 2,
+}
+
+#[derive(Clone)]
+pub struct PrioritizedBehavior {
+    pub priority: Priority,
+    pub behavior: Box<Behavior>,
+}
+
+impl PrioritizedBehavior {
+    pub fn new() -> Self {
+        Self {
+            priority: Priority::Low,
+            behavior: Box::new(Noop {}),
+        }
+    }
+
+    pub fn with_low<T: Behavior>(behavior: T) -> Self {
+        Self {
+            priority: Priority::Low,
+            behavior: behavior.box_clone(),
+        }
+    }
+
+    pub fn with_medium<T: Behavior>(behavior: T) -> Self {
+        Self {
+            priority: Priority::Medium,
+            behavior: behavior.box_clone(),
+        }
+    }
+
+    pub fn with_high<T: Behavior>(behavior: T) -> Self {
+        Self {
+            priority: Priority::High,
+            behavior: behavior.box_clone(),
+        }
+    }
 }

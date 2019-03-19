@@ -6,7 +6,7 @@ use std::{
     time::Duration,
 };
 
-pub trait Behavior {
+pub trait Behavior: Send {
     fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand>;
     fn box_clone(&self) -> Box<Behavior>;
 }
@@ -265,5 +265,11 @@ impl Behavior for Dodge {
 
     fn box_clone(&self) -> Box<Behavior> {
         Box::new(self.clone())
+    }
+}
+
+impl Dodge {
+    pub fn new() -> Self {
+        Self { next: Sequence::new() }
     }
 }
