@@ -13,8 +13,8 @@ use url::{
 };
 
 pub mod analyzer;
+pub mod behavior;
 pub mod geom;
-pub mod strategy;
 
 /// `Handler` is provided as the trait that players can implement to interact
 /// with the game server.

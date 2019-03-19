@@ -3,10 +3,7 @@ use std::time::Instant;
 use tokyo::{
     self,
     analyzer::Analyzer,
-    strategy::{
-        behavior::{Behavior, Chase, FireAt, Sequence},
-        target::Target,
-    },
+    behavior::{Behavior, Chase, FireAt, Sequence, Target},
     Handler,
 };
 

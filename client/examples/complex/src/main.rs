@@ -1,16 +1,20 @@
+#![allow(dead_code)]
+
+use crate::{
+    condition::{Always, PlayerWithin},
+    strategy::{PrioritizedBehavior, Strategy, StrategyNode},
+};
 use common::models::*;
 use std::time::Instant;
 use tokyo::{
     self,
     analyzer::Analyzer,
-    strategy::{
-        behavior::{Dodge, FireAt},
-        condition::{Always, PlayerWithin},
-        target::Target,
-        PrioritizedBehavior, Strategy, StrategyNode,
-    },
+    behavior::{Dodge, FireAt, Target},
     Handler,
 };
+
+mod condition;
+mod strategy;
 
 struct Player {
     analyzer: Analyzer,

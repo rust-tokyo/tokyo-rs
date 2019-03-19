@@ -1,8 +1,8 @@
-use crate::analyzer::Analyzer;
 use std::{
     fmt::Debug,
     time::{Duration, Instant},
 };
+use tokyo::analyzer::Analyzer;
 
 pub trait Condition: Send + Debug {
     fn evaluate(&mut self, _: &Analyzer) -> bool;

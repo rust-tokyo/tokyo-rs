@@ -1,14 +1,8 @@
-use crate::{
+use crate::condition::Condition;
+use tokyo::{
     analyzer::Analyzer,
-    strategy::{
-        behavior::{Behavior, Noop},
-        condition::Condition,
-    },
+    behavior::{Behavior, Noop},
 };
-
-pub mod behavior;
-pub mod condition;
-pub mod target;
 
 #[derive(Debug)]
 pub struct Strategy {
@@ -54,6 +48,7 @@ pub enum Priority {
     High = 2,
 }
 
+// TODO: Replace with a pair.
 #[derive(Clone, Debug)]
 pub struct PrioritizedBehavior {
     pub priority: Priority,

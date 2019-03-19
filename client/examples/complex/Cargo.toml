@@ -1,0 +1,12 @@
+[package]
+name = "complex"
+description = "A more complex, and possibly over-engineered example of the tokyo-rs meetup client"
+documentation = "https://docs.rs/tokyo"
+repository = "https://github.com/rust-tokyo/tokyo-rs"
+version = "0.1.0"
+authors = ["Ryo Kawaguchi <ryo@kawagu.ch>"]
+edition = "2018"
+
+[dependencies]
+common = { path = "../../../common" }
+tokyo = { path = "../../../client" }
