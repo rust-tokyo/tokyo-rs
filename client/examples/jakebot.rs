@@ -17,7 +17,7 @@ struct Player {
 const SPRAY_ANGLE: f32 = 15.0;
 
 impl Player {
-    fn move_towards_closest(&mut self) -> Option<GameCommand> {
+    fn approach_closest(&mut self) -> Option<GameCommand> {
         let me = self.analyzer.own_player();
         if let Some(closest) = self.analyzer.player_closest() {
             if me.distance(closest) < 200.0 {
@@ -66,10 +66,10 @@ impl Handler for Player {
                 self.state = Some(State::Spray(3, angle - Angle::degrees(SPRAY_ANGLE)));
                 Some(GameCommand::Rotate(angle.get()))
             } else {
-                self.move_towards_closest()
+                self.approach_closest()
             }
         } else {
-            self.move_towards_closest()
+            self.approach_closest()
         }
     }
 }
