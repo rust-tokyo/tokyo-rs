@@ -5,6 +5,7 @@ const DEAD_PUNISH: Duration = Duration::from_secs(3);
 
 const BOUNDS: (f32, f32) = (1440.0, 960.0);
 const THROTTLE_PIXELS: f32 = 10.0;
+const MAX_CONCURRENT_BULLETS: usize = 4;
 
 pub trait Triangle {
     fn x(&self) -> f32;
@@ -23,7 +24,6 @@ pub trait Triangle {
     }
 }
 
-
 impl Triangle for PlayerState {
     fn x(&self) -> f32 { self.x }
     fn y(&self) -> f32 { self.y }
@@ -37,7 +37,6 @@ impl Triangle for BulletState {
     fn angle(&self) -> f32 { self.angle }
     fn radius(&self) -> f32 { BULLET_RADIUS }
 }
-
 
 pub struct Game {
     pub state: GameState,
@@ -90,19 +89,26 @@ impl Game {
                     player.y = player.y.max(PLAYER_RADIUS).min(BOUNDS.1 - PLAYER_RADIUS);
                 }
                 GameCommand::Fire => {
-                    let bullet_id = self.bullet_id_counter;
-                    self.bullet_id_counter += 1;
+                    let active_bullets = self.state.bullets
+                        .iter()
+                        .filter(|bullet| bullet.player_id == player.id)
+                        .count();
 
-                    let distance_from_player: f32 = 5.0;
-                    let (bullet_x, bullet_y) = angle_to_vector(player.angle);
+                    if active_bullets < MAX_CONCURRENT_BULLETS {
+                        let bullet_id = self.bullet_id_counter;
+                        self.bullet_id_counter += 1;
 
-                    self.state.bullets.push(BulletState {
-                        id: bullet_id,
-                        player_id: player.id,
-                        angle: player.angle,
-                        x: player.x + (bullet_x * distance_from_player),
-                        y: player.y + (bullet_y * distance_from_player),
-                    });
+                        let distance_from_player: f32 = 5.0;
+                        let (bullet_x, bullet_y) = angle_to_vector(player.angle);
+
+                        self.state.bullets.push(BulletState {
+                            id: bullet_id,
+                            player_id: player.id,
+                            angle: player.angle,
+                            x: player.x + (bullet_x * distance_from_player),
+                            y: player.y + (bullet_y * distance_from_player),
+                        });
+                    }
                 }
             }
         }
