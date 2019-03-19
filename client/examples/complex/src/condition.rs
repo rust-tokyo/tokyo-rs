@@ -82,7 +82,7 @@ pub struct PlayerWithin {
 
 impl Condition for PlayerWithin {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
-        analyzer.players_within(self.radius).len() > 0
+        analyzer.players_within(self.radius).count() > 0
     }
 }
 
@@ -102,6 +102,6 @@ pub struct BulletWithin {
 
 impl Condition for BulletWithin {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
-        analyzer.bullets_within(self.radius).len() > 0
+        analyzer.bullets_within(self.radius).count() > 0
     }
 }

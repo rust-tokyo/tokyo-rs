@@ -126,7 +126,7 @@ impl Rotate {
 
 #[derive(Clone, Debug)]
 pub struct Fire {
-    pub times: u32,
+    times: u32,
 }
 
 impl Behavior for Fire {
@@ -145,15 +145,19 @@ impl Behavior for Fire {
 }
 
 impl Fire {
-    pub fn once() -> Self {
-        Self { times: 1 }
+    pub fn new() -> Self {
+        Self::with_times(1)
+    }
+
+    pub fn with_times(times: u32) -> Self {
+        Self { times }
     }
 }
 
 #[derive(Clone, Debug)]
 pub struct FireAt {
-    pub target: Target,
-    pub times: u32,
+    target: Target,
+    times: u32,
     next: Sequence,
 }
 
@@ -167,10 +171,8 @@ impl Behavior for FireAt {
             if let Some(target) = self.target.get(analyzer) {
                 self.times -= 1;
                 let angle = analyzer.own_player().angle_to(target);
-                self.next = Sequence::with_slice(&[
-                    &Rotate::with_margin_degrees(angle, 5.0),
-                    &Fire::once(),
-                ]);
+                self.next =
+                    Sequence::with_slice(&[&Rotate::with_margin_degrees(angle, 5.0), &Fire::new()]);
                 return self.next.next_command(analyzer);
             }
         }
@@ -244,7 +246,7 @@ pub struct Dodge;
 
 impl Behavior for Dodge {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
-        if let Some(bullet) = analyzer.bullets_colliding(Duration::from_secs(3)).iter().next() {
+        if let Some(bullet) = analyzer.bullets_colliding(Duration::from_secs(3)).next() {
             let angle = bullet.velocity.tangent();
             Sequence::with_slice(&[
                 &Rotate::with_margin_degrees(angle, 30.0),

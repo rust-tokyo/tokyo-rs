@@ -76,7 +76,3 @@ impl RadianExt for Radian {
         self
     }
 }
-
-pub trait Positioned {
-    fn position(&self) -> Point;
-}

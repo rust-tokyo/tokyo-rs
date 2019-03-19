@@ -64,59 +64,54 @@ impl Analyzer {
         self.player(self.own_player_id).unwrap()
     }
 
-    // TODO: return iterator.
-    pub fn other_players(&self) -> Vec<&Player> {
-        self.players.values().filter(|player| player.id != self.own_player_id).collect::<Vec<_>>()
+    // conservative_impl_trait will help get rid of Box.
+    // https://github.com/rust-lang/rfcs/blob/master/text/1522-conservative-impl-trait.md
+    pub fn other_players<'a>(&'a self) -> Box<Iterator<Item = &'a Player> + 'a> {
+        Box::new(self.players.values().filter(move |player| player.id != self.own_player_id))
     }
 
     pub fn player_closest(&self) -> Option<&Player> {
-        self.other_players()
-            .iter()
-            .min_by_key(|player| (self.own_player().distance(**player) * 1e3) as u64)
-            .map(|player| *player)
+        self.other_players().min_by_key(|player| (self.own_player().distance(*player) * 1e3) as u64)
     }
 
     pub fn player_least_moving(&self) -> Option<&Player> {
         self.other_players()
-            .iter()
             .min_by_key(|player| (player.trajectory.ave_abs_velocity().length() * 1e3) as u64)
-            .map(|player| *player)
     }
 
     pub fn player_highest_score(&self) -> Option<&Player> {
-        self.other_players().iter().max_by_key(|player| player.score()).map(|player| *player)
+        self.other_players().max_by_key(|player| player.score())
     }
 
     pub fn player_highest_score_after(&self, after: Duration) -> Option<&Player> {
-        self.other_players()
-            .iter()
-            .max_by_key(|player| player.score_history.project(after))
-            .map(|player| *player)
+        self.other_players().max_by_key(|player| player.score_history.project(after))
     }
 
-    pub fn players_within(&self, radius: f32) -> Vec<&Player> {
-        self.other_players()
-            .iter()
-            .filter(|player| self.own_player().distance(**player) <= radius)
-            .map(|player| *player)
-            .collect::<Vec<_>>()
+    pub fn players_within<'a>(&'a self, radius: f32) -> Box<Iterator<Item = &'a Player> + 'a> {
+        Box::new(
+            self.other_players()
+                .filter(move |player| self.own_player().distance(*player) <= radius),
+        )
     }
 
     pub fn own_bullets_count(&self) -> usize {
         self.bullets.iter().filter(|bullet| bullet.player_id == self.own_player_id).count()
     }
 
-    pub fn bullets_colliding(&self, during: Duration) -> Vec<&Bullet> {
-        self.bullets
-            .iter()
-            .filter(|bullet| self.own_player().is_colliding_during(bullet, during.clone()))
-            .collect::<Vec<_>>()
+    pub fn bullets_colliding<'a>(
+        &'a self,
+        during: Duration,
+    ) -> Box<Iterator<Item = &'a Bullet> + 'a> {
+        Box::new(
+            self.bullets.iter().filter(move |bullet| {
+                self.own_player().is_colliding_during(bullet, during.clone())
+            }),
+        )
     }
 
-    pub fn bullets_within(&self, radius: f32) -> Vec<&Bullet> {
-        self.bullets
-            .iter()
-            .filter(|bullet| self.own_player().distance(*bullet) <= radius)
-            .collect::<Vec<_>>()
+    pub fn bullets_within<'a>(&'a self, radius: f32) -> Box<Iterator<Item = &'a Bullet> + 'a> {
+        Box::new(
+            self.bullets.iter().filter(move |bullet| self.own_player().distance(*bullet) <= radius),
+        )
     }
 }
