@@ -12,6 +12,7 @@ use std::sync::mpsc::{channel, Receiver, Sender};
 pub struct GameActor {
     connections: HashMap<String, Addr<ClientWsActor>>,
     spectators: HashSet<Addr<ClientWsActor>>,
+    team_names: HashMap<u32, String>,
     cancel_chan: Option<oneshot::Sender<()>>,
     msg_tx: Sender<GameLoopCommand>,
     msg_rx: Option<Receiver<GameLoopCommand>>,
@@ -33,6 +34,7 @@ impl GameActor {
         GameActor {
             connections: HashMap::new(),
             spectators: HashSet::new(),
+            team_names: HashMap::new(),
             cancel_chan: None,
             msg_tx,
             msg_rx: Some(msg_rx),
@@ -116,7 +118,7 @@ impl Actor for GameActor {
 
 #[derive(Debug, Message)]
 pub enum SocketEvent {
-    Join(String, Addr<ClientWsActor>),
+    Join(String, String, Addr<ClientWsActor>),
     Leave(String, Addr<ClientWsActor>),
 }
 
@@ -125,13 +127,14 @@ impl Handler<SocketEvent> for GameActor {
 
     fn handle(&mut self, msg: SocketEvent, _ctx: &mut Self::Context) {
         match msg {
-            SocketEvent::Join(api_key, addr) => {
+            SocketEvent::Join(api_key, team_name, addr) => {
                 let key_clone = api_key.clone();
                 let addr_clone = addr.clone();
 
                 info!("person joined - {:?}", api_key);
 
                 if api_key == "SPECTATOR" {
+                    addr.do_send(ServerToClient::TeamNames(self.team_names.clone()));
                     self.spectators.insert(addr);
                 } else {
                     let existing_client_opt = self.connections.insert(api_key, addr);
@@ -141,8 +144,9 @@ impl Handler<SocketEvent> for GameActor {
                         existing_client.do_send(ClientStop {});
                     }
 
-                    if let Some(player_id) = self.api_key_to_player_id.get(&key_clone) {
+                    let player_id = if let Some(player_id) = self.api_key_to_player_id.get(&key_clone) {
                         addr_clone.do_send(ServerToClient::Id(*player_id));
+                        *player_id
                     } else {
                         // This was the first time this API key connected,
                         // assign them a player ID and return it
@@ -157,6 +161,13 @@ impl Handler<SocketEvent> for GameActor {
                             .expect("The game loop should always be receiving commands");
 
                         addr_clone.do_send(ServerToClient::Id(player_id));
+                        player_id
+                    };
+
+                    // Update team name and broadcast new team names list to all sockets.
+                    self.team_names.insert(player_id, team_name);
+                    for addr in self.connections.values().chain(self.spectators.iter()) {
+                        addr.do_send(ServerToClient::TeamNames(self.team_names.clone()));
                     }
                 }
             }

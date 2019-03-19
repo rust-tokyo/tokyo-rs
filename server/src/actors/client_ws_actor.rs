@@ -13,11 +13,12 @@ const ACTIONS_PER_SECOND: u32 = 10;
 pub struct ClientWsActor {
     game_addr: Addr<GameActor>,
     api_key: String,
+    team_name: String,
     rate_limiter: DirectRateLimiter<GCRA>,
 }
 
 impl ClientWsActor {
-    pub fn new(game_addr: Addr<GameActor>, api_key: String) -> ClientWsActor {
+    pub fn new(game_addr: Addr<GameActor>, api_key: String, team_name: String) -> ClientWsActor {
         let rate_limiter = DirectRateLimiter::<GCRA>::per_second(
             std::num::NonZeroU32::new(ACTIONS_PER_SECOND).unwrap(),
         );
@@ -25,6 +26,7 @@ impl ClientWsActor {
         ClientWsActor {
             game_addr,
             api_key,
+            team_name,
             rate_limiter,
         }
     }
@@ -37,6 +39,7 @@ impl Actor for ClientWsActor {
         self.game_addr
             .do_send(crate::actors::game_actor::SocketEvent::Join(
                 self.api_key.clone(),
+                self.team_name.clone(),
                 ctx.address(),
             ));
     }

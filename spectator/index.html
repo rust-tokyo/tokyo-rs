@@ -31,6 +31,13 @@
                 top: 10;
                 left: 0;
             }
+
+            .team .id::before {
+                content: "(team #";
+            }
+            .team .id::after {
+                content: ")";
+            }
     </style>
     </head>
     <body>
@@ -52,6 +59,7 @@
                 c.width = document.body.clientWidth; //document.width is obsolete
                 c.height = document.body.clientHeight; //document.height is obsolete
             }
+            var team_names = {};
 
             var ctx = c.getContext("2d");
 
@@ -126,7 +134,10 @@
             // Listen for messages
             socket.addEventListener('message', function (event) {
                 let json = JSON.parse(event.data);
-                if (json.e === "state") {
+                if (json.e === "teamnames") {
+                    team_names = json.data;
+                    console.log("got new team_names", team_names);
+                } else if (json.e === "state") {
                     // console.log(json.data);
                     const data = json.data;
 
@@ -154,11 +165,11 @@
                     for (const bullet of data.bullets) {
                         new Bullet(bullet).draw(ctx);
                     }
-                    
 
+                    var sorted_players = Object.keys(data.scoreboard).sort(function(a,b){return data.scoreboard[b]-data.scoreboard[a]});
                     chart.innerHTML = "";
-                    for (const player_id of Object.keys(data.scoreboard)) {
-                        chart.innerHTML += `${player_id}: ${data.scoreboard[player_id]}\n`;
+                    for (const player_id of sorted_players) {
+                        chart.innerHTML += `<span class="score">${data.scoreboard[player_id]}</span> - <span class="team"><span class="name">${team_names[player_id]}</span> <span class="id">${player_id}</span></span>\n`;
                     }
                 }
             });

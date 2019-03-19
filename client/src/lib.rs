@@ -78,6 +78,7 @@ where
                 ServerToClient::GameState(state) => {
                     (*client_state).lock().unwrap().game_state = state;
                 }
+                _ => {}
             }
 
             Ok(())

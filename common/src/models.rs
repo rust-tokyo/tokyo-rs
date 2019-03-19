@@ -32,6 +32,9 @@ pub enum ServerToClient {
 
     #[serde(rename = "state")]
     GameState(GameState), // Send the game state to the client
+
+    #[serde(rename = "teamnames")]
+    TeamNames(HashMap<u32, String>), // Send the game state to the client
 }
 
 #[derive(Clone, Debug, Serialize, Deserialize)]
