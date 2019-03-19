@@ -1,7 +1,11 @@
-use crate::{analyzer::Analyzer, strategy::{condition::Condition, behavior::Behavior}};
+use crate::{
+    analyzer::Analyzer,
+    strategy::{behavior::Behavior, condition::Condition},
+};
 
 pub mod behavior;
 pub mod condition;
+pub mod target;
 
 pub struct Strategy {
     tree: StrategyNode,
@@ -35,7 +39,7 @@ impl StrategyNode {
                 }
                 None
             }
-            StrategyNode::Leaf(leaf) => Some(leaf.clone())
+            StrategyNode::Leaf(leaf) => Some(leaf.clone()),
         }
     }
 }

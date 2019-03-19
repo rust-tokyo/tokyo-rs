@@ -83,7 +83,7 @@ impl Condition for PlayerWithin {
 pub struct PlayerWithHigherScore;
 impl Condition for PlayerWithHigherScore {
     fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
-        analyzer.player_with_highest_score().id != analyzer.own_player().id
+        analyzer.player_highest_score().id != analyzer.own_player().id
     }
 }
 

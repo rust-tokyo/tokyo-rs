@@ -1,6 +1,6 @@
 use std::time::Instant;
 use common::models::*;
-use tokyo::{self, Handler, strategy::{behavior::{Chase, Behavior}}, analyzer::Analyzer};
+use tokyo::{self, Handler, strategy::{behavior::{Chase, Behavior}, target::Target}, analyzer::Analyzer};
 
 struct Player {
     analyzer: Analyzer,
@@ -11,7 +11,7 @@ impl Player {
     fn new() -> Self {
         Self {
             analyzer: Analyzer::new(),
-            behavior: Chase { target: 0 },
+            behavior: Chase { target: Target::HighestScore },
         }
     }
 }

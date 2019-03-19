@@ -61,19 +61,45 @@ impl Analyzer {
         self.player(self.own_player_id)
     }
 
-    pub fn angle_to(&self, target: u32) -> Radian {
-        self.own_player()
-            .position
-            .angle_to(&self.player(target).position)
+    pub fn angle_to(&self, target: &Positioned) -> Radian {
+        self.own_player().position.angle_to(&target.position())
     }
 
     pub fn players_within(&self, radius: f32) -> Vec<&Player> {
         let my_position = self.own_player().position;
-        self.players.values().filter(|player| my_position.distance(&player.position) <= radius).collect::<Vec<_>>()
+        self.players
+            .values()
+            .filter(|player| my_position.distance(&player.position) <= radius)
+            .collect::<Vec<_>>()
     }
 
-    pub fn player_with_highest_score(&self) -> &Player {
-        self.players.values().max_by_key(|player| player.score()).unwrap()
+    pub fn player_closest(&self) -> &Player {
+        let my_position = self.own_player().position;
+        self.players
+            .values()
+            .max_by_key(|player| (my_position.distance(&player.position) * 1e3) as u64)
+            .unwrap()
+    }
+
+    pub fn player_least_moving(&self) -> &Player {
+        self.players
+            .values()
+            .min_by_key(|player| (player.trajectory.ave_abs_velocity().length() * 1e3) as u64)
+            .unwrap()
+    }
+
+    pub fn player_highest_score(&self) -> &Player {
+        self.players
+            .values()
+            .max_by_key(|player| player.score())
+            .unwrap()
+    }
+
+    pub fn player_highest_score_after(&self, after: Duration) -> &Player {
+        self.players
+            .values()
+            .max_by_key(|player| player.score_history.project(after))
+            .unwrap()
     }
 
     pub fn bullets_colliding(&self, during: Duration) -> Vec<&Bullet> {
@@ -88,8 +114,15 @@ impl Analyzer {
 
     pub fn bullets_within(&self, radius: f32) -> Vec<&Bullet> {
         let my_position = self.own_player().position;
-        self.bullets.iter().filter(|bullet| my_position.distance(&bullet.position) <= radius).collect::<Vec<_>>()
+        self.bullets
+            .iter()
+            .filter(|bullet| my_position.distance(&bullet.position) <= radius)
+            .collect::<Vec<_>>()
     }
+}
+
+pub trait Positioned {
+    fn position(&self) -> Point;
 }
 
 pub struct Player {
@@ -157,6 +190,12 @@ impl Player {
         (1..num_analysis + 1)
             .map(|tick| self.is_colliding_after(bullet, ANALYSIS_INTERVAL * tick))
             .any(|hit| hit)
+    }
+}
+
+impl Positioned for Player {
+    fn position(&self) -> Point {
+        self.position
     }
 }
 
@@ -263,5 +302,11 @@ impl Bullet {
 
     pub fn project_position(&self, after: Duration) -> Point {
         self.position.project(&self.velocity, after)
+    }
+}
+
+impl Positioned for Bullet {
+    fn position(&self) -> Point {
+        self.position
     }
 }
