@@ -34,7 +34,7 @@ impl Player {
                 (
                     Box::new(Always {}),
                     Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_medium(
-                        Dodge::new(),
+                        Dodge {},
                     ))),
                 ),
             ]),
