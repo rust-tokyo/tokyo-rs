@@ -86,9 +86,11 @@
                 }
 
                 draw(ctx) {
-                    // console.log(`S${this.id} (${this.x},${this.y})`);
+                    // orient the ship
                     ctx.translate(this.x, this.y);
                     ctx.rotate(this.angle - Math.PI / 2.0);
+
+                    // draw the ship triangle
                     ctx.beginPath();
                     ctx.moveTo(-SHIP_SIZE*0.8, -SHIP_SIZE);
                     ctx.lineTo(0, SHIP_SIZE);
@@ -96,6 +98,21 @@
                     ctx.lineTo(-SHIP_SIZE*0.8, -SHIP_SIZE);
                     ctx.fill();
                     ctx.stroke();
+
+                    // draw team name
+                    ctx.rotate(-this.angle + Math.PI / 2.0); // please don't ask me about this math
+                    const oldFill = ctx.fillStyle;
+                    ctx.font = '9px monospace';
+                    ctx.textAlign = 'left';
+                    ctx.textBaseline = 'top';
+                    let textMeasurements = ctx.measureText(team_names[this.id]);
+                    ctx.fillStyle = "#000000";
+                    ctx.fillRect(17, -3, textMeasurements.width + 6, 15);
+                    ctx.fillStyle = "#ffffff";
+                    ctx.fillText(team_names[this.id], 20, 0);
+                    ctx.fillStyle = oldFill;
+
+                    // reset transformation
                     ctx.setTransform(1, 0, 0, 1, 0, 0);
                 }
             }
