@@ -28,7 +28,7 @@ impl Player {
                 (
                     Box::new(PlayerWithin { radius: 100.0 }),
                     Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_high(
-                        FireAt::once(Target::Closest),
+                        FireAt::new(Target::Closest),
                     ))),
                 ),
                 (

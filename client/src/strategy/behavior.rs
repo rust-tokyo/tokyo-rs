@@ -1,7 +1,7 @@
 use crate::{analyzer::Analyzer, geom::*, strategy::target::Target};
 use common::models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
 use rand::{thread_rng, Rng};
-use std::{collections::VecDeque, time::Duration, fmt::Debug};
+use std::{collections::VecDeque, fmt::Debug, time::Duration};
 
 pub trait Behavior: Send + Debug {
     fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand>;
@@ -11,6 +11,12 @@ pub trait Behavior: Send + Debug {
 impl Clone for Box<Behavior> {
     fn clone(&self) -> Self {
         self.box_clone()
+    }
+}
+
+impl Default for Box<Behavior> {
+    fn default() -> Self {
+        Box::new(Noop {})
     }
 }
 
@@ -37,24 +43,13 @@ impl Behavior for Sequence {
 
 impl Sequence {
     pub fn new() -> Self {
-        Self { inner: VecDeque::new() }
+        Sequence::with_slice(&[])
     }
 
-    pub fn two<T1, T2>(b1: T1, b2: T2) -> Self
-    where
-        T1: Behavior,
-        T2: Behavior,
-    {
-        Self { inner: vec![b1.box_clone(), b2.box_clone()].into() }
-    }
-
-    pub fn three<T1, T2, T3>(b1: T1, b2: T2, b3: T3) -> Self
-    where
-        T1: Behavior,
-        T2: Behavior,
-        T3: Behavior,
-    {
-        Self { inner: vec![b1.box_clone(), b2.box_clone(), b3.box_clone()].into() }
+    pub fn with_slice(behaviors: &[&Behavior]) -> Self {
+        Self {
+            inner: behaviors.into_iter().map(|b| b.box_clone()).collect::<VecDeque<_>>()
+        }
     }
 }
 
@@ -94,7 +89,9 @@ impl Behavior for Forward {
 
 impl Forward {
     pub fn with_steps(steps: u32) -> Self {
-        Self { distance: PLAYER_MAX_SPEED * steps as f32 }
+        Self {
+            distance: PLAYER_MAX_SPEED * steps as f32,
+        }
     }
 }
 
@@ -124,7 +121,10 @@ impl Rotate {
     }
 
     pub fn with_margin_degrees(angle: Radian, margin_degrees: f32) -> Self {
-        Self { angle, margin: Radian::degrees(margin_degrees) }
+        Self {
+            angle,
+            margin: Radian::degrees(margin_degrees),
+        }
     }
 }
 
@@ -158,7 +158,7 @@ impl Fire {
 pub struct FireAt {
     pub target: Target,
     pub times: u32,
-    next: Sequence
+    next: Sequence,
 }
 
 impl Behavior for FireAt {
@@ -171,7 +171,7 @@ impl Behavior for FireAt {
             if let Some(target) = self.target.get(analyzer) {
                 self.times -= 1;
                 let angle = analyzer.own_player().angle_to(target);
-                self.next = Sequence::two(Rotate::with_margin_degrees(angle, 5.0), Fire::once());
+                self.next = Sequence::with_slice(&[&Rotate::with_margin_degrees(angle, 5.0), &Fire::once()]);
                 return self.next.next_command(analyzer);
             }
         }
@@ -184,13 +184,16 @@ impl Behavior for FireAt {
 }
 
 impl FireAt {
-    pub fn once(target: Target) -> Self {
+    pub fn new(target: Target) -> Self {
         Self::with_times(target, 1)
     }
 
     pub fn with_times(target: Target, times: u32) -> Self {
-        Self { target, times, next: Sequence::new() }
-
+        Self {
+            target,
+            times,
+            next: Sequence::new(),
+        }
     }
 }
 
@@ -202,8 +205,12 @@ impl Behavior for Random {
         let mut rng = thread_rng();
         match rng.gen_range(0, 4) {
             0 => None,
-            1 => Some(GameCommand::Rotate(rng.gen_range(0.0, 2.0 * std::f32::consts::PI))),
-            2 => Some(GameCommand::Forward(rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED))),
+            1 => Some(GameCommand::Rotate(
+                rng.gen_range(0.0, 2.0 * std::f32::consts::PI),
+            )),
+            2 => Some(GameCommand::Forward(
+                rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED),
+            )),
             3 => Some(GameCommand::Fire),
             _ => unreachable!(),
         }
@@ -217,17 +224,20 @@ impl Behavior for Random {
 #[derive(Clone, Debug)]
 pub struct Chase {
     pub target: Target,
-    pub reach: f32,
+    pub distance: f32,
 }
 
 impl Behavior for Chase {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
         if let Some(target) = self.target.get(analyzer) {
             let distance_to_target = analyzer.own_player().distance(target);
-            if distance_to_target > self.reach {
+            if distance_to_target > self.distance {
                 let angle = analyzer.own_player().angle_to(target);
-                return Sequence::two(Rotate::with_margin_degrees(angle, 10.0), Forward::with_steps(1))
-                    .next_command(analyzer);
+                return Sequence::with_slice(&[
+                    &Rotate::with_margin_degrees(angle, 10.0),
+                    &Forward::with_steps(1),
+                ])
+                .next_command(analyzer);
             }
         }
         None
@@ -243,9 +253,17 @@ pub struct Dodge;
 
 impl Behavior for Dodge {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
-        if let Some(bullet) = analyzer.bullets_colliding(Duration::from_secs(1)).iter().next() {
+        if let Some(bullet) = analyzer
+            .bullets_colliding(Duration::from_secs(3))
+            .iter()
+            .next()
+        {
             let angle = bullet.velocity.tangent();
-            Sequence::two(Rotate::with_margin_degrees(angle, 30.0), Forward::with_steps(1)).next_command(analyzer)
+            Sequence::with_slice(&[
+                &Rotate::with_margin_degrees(angle, 30.0),
+                &Forward::with_steps(1),
+            ])
+            .next_command(analyzer)
         } else {
             None
         }

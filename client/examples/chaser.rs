@@ -5,6 +5,20 @@ use tokyo::{self, Handler, strategy::{behavior::{Chase, Behavior, Sequence, Fire
 #[derive(Default)]
 struct Player {
     analyzer: Analyzer,
+    current_behavior: Box<Behavior>,
+}
+
+fn chase() -> Box<Behavior> {
+    // Behavior to keep chasing the target (in this case, the player with
+    // the highest score.) It yields to the next behavior when the distance
+    // to the player is less than 200.0.
+    let chase = Chase { target: Target::HighestScore, distance: 200.0 };
+
+    // Behavior to fire at the target player twice.
+    let fire = FireAt::with_times(Target::HighestScore, 2);
+
+    // A sequence of behaviors: chase and then fire.
+    Box::new(Sequence::with_slice(&[&chase, &fire]))
 }
 
 impl Handler for Player {
@@ -15,12 +29,12 @@ impl Handler for Player {
             return None;
         }
 
-        // Keep chasing a player with the highest score and shoots it once it's
-        // within reach.
-        Sequence::two(
-            Chase { target: Target::HighestScore, reach: 200.0 },
-            FireAt::once(Target::HighestScore),
-        ).next_command(&self.analyzer)
+        if let Some(command) = self.current_behavior.next_command(&self.analyzer) {
+            Some(command)
+        } else {
+            self.current_behavior = chase();
+            self.current_behavior.next_command(&self.analyzer)
+        }
     }
 }
 

@@ -32,7 +32,7 @@ impl Handler for Player {
         Some(match self.counter % 3 {
             0 => GameCommand::Rotate(angle),
             1 => GameCommand::Fire,
-            _ => GameCommand::Forward(10.0),
+            _ => GameCommand::Forward(1.0),
         })
     }
 }
