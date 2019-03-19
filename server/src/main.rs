@@ -50,9 +50,7 @@ fn main() -> Result<(), String> {
     let game_actor_addr = game_actor.start();
 
     let mut server = server::new(move || {
-        let app_state = AppState {
-            game_addr: game_actor_addr.clone(),
-        };
+        let app_state = AppState { game_addr: game_actor_addr.clone() };
 
         App::with_state(app_state)
             .middleware(Logger::default())
@@ -60,18 +58,14 @@ fn main() -> Result<(), String> {
                 r.method(Method::GET).with(controllers::api::socket_handler);
             })
             .resource("/spectate", |r| {
-                r.method(Method::GET)
-                    .with(controllers::api::spectate_handler);
+                r.method(Method::GET).with(controllers::api::spectate_handler);
             })
             .handler(
                 "/",
-                actix_web::fs::StaticFiles::new("../spectator/")
-                    .unwrap()
-                    .index_file("index.html"),
+                actix_web::fs::StaticFiles::new("../spectator/").unwrap().index_file("index.html"),
             )
             .resource("/{tail:.*}j", |r| {
-                r.method(Method::GET)
-                    .with(controllers::common::index_handler)
+                r.method(Method::GET).with(controllers::common::index_handler)
             })
     });
 

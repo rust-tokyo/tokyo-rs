@@ -13,11 +13,7 @@ pub fn socket_handler(
     if crate::APP_CONFIG.dev_mode || crate::APP_CONFIG.api_keys.contains(&query.key) {
         actix_web::ws::start(
             &req,
-            ClientWsActor::new(
-                state.game_addr.clone(),
-                query.key.clone(),
-                query.name.clone(),
-            ),
+            ClientWsActor::new(state.game_addr.clone(), query.key.clone(), query.name.clone()),
         )
     } else {
         Err(actix_web::error::ErrorBadRequest("Invalid API Key"))

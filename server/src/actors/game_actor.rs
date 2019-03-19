@@ -1,12 +1,16 @@
-use crate::actors::ClientWsActor;
-use crate::game::Game;
-use crate::models::messages::{ClientStop, PlayerGameCommand};
+use crate::{
+    actors::ClientWsActor,
+    game::Game,
+    models::messages::{ClientStop, PlayerGameCommand},
+};
 use actix::{Actor, Addr, AsyncContext, Context, Handler, Message};
 use common::models::*;
 use futures::sync::oneshot;
 use spin_sleep::LoopHelper;
-use std::collections::{HashMap, HashSet};
-use std::sync::mpsc::{channel, Receiver, Sender};
+use std::{
+    collections::{HashMap, HashSet},
+    sync::mpsc::{channel, Receiver, Sender},
+};
 
 #[derive(Debug)]
 pub struct GameActor {
@@ -63,8 +67,8 @@ fn game_loop(
         match cancel_chan.try_recv() {
             Ok(Some(_)) | Err(_) => {
                 break;
-            }
-            _ => {}
+            },
+            _ => {},
         }
 
         for cmd in msg_chan.try_iter() {
@@ -72,13 +76,13 @@ fn game_loop(
             match cmd {
                 GameLoopCommand::PlayerJoined(id) => {
                     game.add_player(id);
-                }
+                },
                 GameLoopCommand::PlayerLeft(id) => {
                     game.player_left(id);
-                }
+                },
                 GameLoopCommand::GameCommand(id, cmd) => {
                     game.handle_cmd(id, cmd);
-                }
+                },
             }
         }
 
@@ -171,7 +175,7 @@ impl Handler<SocketEvent> for GameActor {
                         addr.do_send(ServerToClient::TeamNames(self.team_names.clone()));
                     }
                 }
-            }
+            },
             SocketEvent::Leave(api_key, addr) => {
                 if api_key == "SPECTATOR" {
                     self.spectators.remove(&addr);
@@ -190,7 +194,7 @@ impl Handler<SocketEvent> for GameActor {
                         }
                     }
                 }
-            }
+            },
         }
     }
 }

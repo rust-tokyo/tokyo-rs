@@ -1,9 +1,10 @@
-use crate::models::messages::{ClientStop, PlayerGameCommand};
-use crate::{actors::GameActor, AppState};
-use actix::{Actor, ActorContext, StreamHandler};
-use actix::{Addr, AsyncContext, Handler};
-use actix_web::ws;
-use actix_web::ws::{CloseCode, CloseReason};
+use crate::{
+    actors::GameActor,
+    models::messages::{ClientStop, PlayerGameCommand},
+    AppState,
+};
+use actix::{Actor, ActorContext, Addr, AsyncContext, Handler, StreamHandler};
+use actix_web::ws::{self, CloseCode, CloseReason};
 use common::models::ServerToClient;
 use ratelimit_meter::{DirectRateLimiter, GCRA};
 
@@ -23,12 +24,7 @@ impl ClientWsActor {
             std::num::NonZeroU32::new(ACTIONS_PER_SECOND).unwrap(),
         );
 
-        ClientWsActor {
-            game_addr,
-            api_key,
-            team_name,
-            rate_limiter,
-        }
+        ClientWsActor { game_addr, api_key, team_name, rate_limiter }
     }
 }
 
@@ -36,20 +32,18 @@ impl Actor for ClientWsActor {
     type Context = ws::WebsocketContext<Self, AppState>;
 
     fn started(&mut self, ctx: &mut Self::Context) {
-        self.game_addr
-            .do_send(crate::actors::game_actor::SocketEvent::Join(
-                self.api_key.clone(),
-                self.team_name.clone(),
-                ctx.address(),
-            ));
+        self.game_addr.do_send(crate::actors::game_actor::SocketEvent::Join(
+            self.api_key.clone(),
+            self.team_name.clone(),
+            ctx.address(),
+        ));
     }
 
     fn stopped(&mut self, ctx: &mut Self::Context) {
-        self.game_addr
-            .do_send(crate::actors::game_actor::SocketEvent::Leave(
-                self.api_key.clone(),
-                ctx.address(),
-            ));
+        self.game_addr.do_send(crate::actors::game_actor::SocketEvent::Leave(
+            self.api_key.clone(),
+            ctx.address(),
+        ));
     }
 }
 
@@ -61,19 +55,17 @@ impl StreamHandler<ws::Message, ws::ProtocolError> for ClientWsActor {
                     let cmd_result = serde_json::from_str(&cmd);
 
                     if let Ok(cmd) = cmd_result {
-                        self.game_addr.do_send(PlayerGameCommand {
-                            api_key: self.api_key.clone(),
-                            cmd,
-                        });
+                        self.game_addr
+                            .do_send(PlayerGameCommand { api_key: self.api_key.clone(), cmd });
                     }
                 } else {
                     warn!("API key {} got rate limited", self.api_key);
                 }
-            }
+            },
             ws::Message::Close(_) => {
                 ctx.stop();
-            }
-            _ => {}
+            },
+            _ => {},
         }
     }
 }

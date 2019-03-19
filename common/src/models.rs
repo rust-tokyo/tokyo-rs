@@ -1,6 +1,8 @@
 use actix::Message;
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
+use std::{
+    collections::HashMap,
+    time::{Duration, SystemTime},
+};
 
 pub const BULLET_RADIUS: f32 = 2.0;
 pub const BULLET_SPEED: f32 = 10.0;
@@ -47,12 +49,7 @@ pub struct PlayerState {
 
 impl PlayerState {
     pub fn new(id: u32) -> Self {
-        Self {
-            id,
-            angle: 0f32,
-            x: 0f32,
-            y: 0f32,
-        }
+        Self { id, angle: 0f32, x: 0f32, y: 0f32 }
     }
 
     pub fn randomize(&mut self, rng: &mut impl rand::Rng, (bound_right, bound_bottom): (f32, f32)) {
@@ -88,10 +85,7 @@ pub struct GameState {
 
 impl GameState {
     pub fn new(bounds: (f32, f32)) -> Self {
-        Self {
-            bounds,
-            ..Default::default()
-        }
+        Self { bounds, ..Default::default() }
     }
 }
 

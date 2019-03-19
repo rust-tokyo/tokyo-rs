@@ -31,12 +31,15 @@ impl Triangle for PlayerState {
     fn x(&self) -> f32 {
         self.x
     }
+
     fn y(&self) -> f32 {
         self.y
     }
+
     fn angle(&self) -> f32 {
         self.angle
     }
+
     fn radius(&self) -> f32 {
         PLAYER_RADIUS
     }
@@ -46,12 +49,15 @@ impl Triangle for BulletState {
     fn x(&self) -> f32 {
         self.x
     }
+
     fn y(&self) -> f32 {
         self.y
     }
+
     fn angle(&self) -> f32 {
         self.angle
     }
+
     fn radius(&self) -> f32 {
         BULLET_RADIUS
     }
@@ -65,11 +71,7 @@ pub struct Game {
 
 impl Default for Game {
     fn default() -> Self {
-        Self {
-            state: GameState::new(BOUNDS),
-            rng: Default::default(),
-            bullet_id_counter: 0,
-        }
+        Self { state: GameState::new(BOUNDS), rng: Default::default(), bullet_id_counter: 0 }
     }
 }
 
@@ -91,7 +93,7 @@ impl Game {
             match cmd {
                 GameCommand::Rotate(angle) => {
                     player.angle = angle;
-                }
+                },
                 GameCommand::Forward(throttle) => {
                     // Bound and re-map throttle inputs.
                     let throttle = throttle.max(0.0).min(1.0);
@@ -106,7 +108,7 @@ impl Game {
                     // Keep the players in bounds
                     player.x = player.x.max(PLAYER_RADIUS).min(BOUNDS.0 - PLAYER_RADIUS);
                     player.y = player.y.max(PLAYER_RADIUS).min(BOUNDS.1 - PLAYER_RADIUS);
-                }
+                },
                 GameCommand::Fire => {
                     let active_bullets = self
                         .state
@@ -130,7 +132,7 @@ impl Game {
                             y: player.y + (bullet_y * distance_from_player),
                         });
                     }
-                }
+                },
             }
         }
     }
@@ -187,10 +189,9 @@ impl Game {
             });
             for mut player in deceased {
                 player.randomize(&mut self.rng, BOUNDS);
-                self.state.dead.push(DeadPlayer {
-                    respawn: SystemTime::now() + DEAD_PUNISH,
-                    player,
-                });
+                self.state
+                    .dead
+                    .push(DeadPlayer { respawn: SystemTime::now() + DEAD_PUNISH, player });
             }
         }
 
