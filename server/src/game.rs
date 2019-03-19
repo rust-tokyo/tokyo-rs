@@ -1,4 +1,7 @@
-use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, BULLET_SPEED, BULLET_RADIUS, PLAYER_RADIUS};
+use common::models::{
+    BulletState, DeadPlayer, GameCommand, GameState, PlayerState, BULLET_RADIUS, BULLET_SPEED,
+    PLAYER_RADIUS,
+};
 use std::time::{Duration, SystemTime};
 
 const DEAD_PUNISH: Duration = Duration::from_secs(3);
@@ -25,17 +28,33 @@ pub trait Triangle {
 }
 
 impl Triangle for PlayerState {
-    fn x(&self) -> f32 { self.x }
-    fn y(&self) -> f32 { self.y }
-    fn angle(&self) -> f32 { self.angle }
-    fn radius(&self) -> f32 { PLAYER_RADIUS }
+    fn x(&self) -> f32 {
+        self.x
+    }
+    fn y(&self) -> f32 {
+        self.y
+    }
+    fn angle(&self) -> f32 {
+        self.angle
+    }
+    fn radius(&self) -> f32 {
+        PLAYER_RADIUS
+    }
 }
 
 impl Triangle for BulletState {
-    fn x(&self) -> f32 { self.x }
-    fn y(&self) -> f32 { self.y }
-    fn angle(&self) -> f32 { self.angle }
-    fn radius(&self) -> f32 { BULLET_RADIUS }
+    fn x(&self) -> f32 {
+        self.x
+    }
+    fn y(&self) -> f32 {
+        self.y
+    }
+    fn angle(&self) -> f32 {
+        self.angle
+    }
+    fn radius(&self) -> f32 {
+        BULLET_RADIUS
+    }
 }
 
 pub struct Game {
@@ -89,7 +108,9 @@ impl Game {
                     player.y = player.y.max(PLAYER_RADIUS).min(BOUNDS.1 - PLAYER_RADIUS);
                 }
                 GameCommand::Fire => {
-                    let active_bullets = self.state.bullets
+                    let active_bullets = self
+                        .state
+                        .bullets
                         .iter()
                         .filter(|bullet| bullet.player_id == player.id)
                         .count();
@@ -119,7 +140,9 @@ impl Game {
     pub fn tick(&mut self, _dt: f32) {
         // Revive the dead
         let now = SystemTime::now();
-        let revived = self.state.dead
+        let revived = self
+            .state
+            .dead
             .drain_filter(|corpse| corpse.respawn <= now)
             .map(|dead| dead.player)
             .map(|player| {
@@ -139,10 +162,10 @@ impl Game {
 
         // Remove out-of-bound bullets
         self.state.bullets.retain(|b| {
-            b.x > (BULLET_RADIUS) &&
-            b.x < (BOUNDS.0 + BULLET_RADIUS) &&
-            b.y > (BULLET_RADIUS) &&
-            b.y < (BOUNDS.1 + BULLET_RADIUS)
+            b.x > (BULLET_RADIUS)
+                && b.x < (BOUNDS.0 + BULLET_RADIUS)
+                && b.y > (BULLET_RADIUS)
+                && b.y < (BOUNDS.1 + BULLET_RADIUS)
         });
 
         // count the dead
@@ -151,7 +174,10 @@ impl Game {
         for bullet in &mut self.state.bullets {
             let deceased = self.state.players.drain_filter(|player| {
                 if player.is_colliding(bullet) && bullet.player_id != player.id {
-                    println!("Player {} killed player {} at ({}, {})", bullet.player_id, player.id, bullet.x, bullet.y);
+                    println!(
+                        "Player {} killed player {} at ({}, {})",
+                        bullet.player_id, player.id, bullet.x, bullet.y
+                    );
                     hits.push(bullet.player_id);
                     used_bullets.push(bullet.id);
                     true
@@ -163,7 +189,7 @@ impl Game {
                 player.randomize(&mut self.rng, BOUNDS);
                 self.state.dead.push(DeadPlayer {
                     respawn: SystemTime::now() + DEAD_PUNISH,
-                    player
+                    player,
                 });
             }
         }

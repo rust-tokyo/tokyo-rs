@@ -37,13 +37,7 @@ impl Player {
         let mut score_history = ScoreHistory::new();
         score_history.push(*scoreboard.get(&state.id).unwrap_or(&0), time);
 
-        Self {
-            id: state.id,
-            angle: Radian::new(state.angle),
-            position,
-            trajectory,
-            score_history,
-        }
+        Self { id: state.id, angle: Radian::new(state.angle), position, trajectory, score_history }
     }
 
     pub fn push_state(
@@ -57,8 +51,7 @@ impl Player {
         self.angle = Radian::new(state.angle);
         self.position = Point::new(state.x, state.y);
         self.trajectory.push(self.position.clone(), time);
-        self.score_history
-            .push(*scoreboard.get(&state.id).unwrap_or(&0), time);
+        self.score_history.push(*scoreboard.get(&state.id).unwrap_or(&0), time);
     }
 
     pub fn score(&self) -> u32 {
@@ -90,9 +83,7 @@ pub struct Trajectory {
 
 impl Trajectory {
     pub fn new() -> Self {
-        Self {
-            positions: Vec::new(),
-        }
+        Self { positions: Vec::new() }
     }
 
     pub fn push(&mut self, position: Point, time: Instant) {
@@ -120,9 +111,7 @@ impl Trajectory {
             .iter()
             .zip(self.positions.iter().skip(1))
             .map(|((prev_position, prev_time), (position, time))| {
-                prev_position
-                    .velocity_to(position, *time - *prev_time)
-                    .abs()
+                prev_position.velocity_to(position, *time - *prev_time).abs()
             })
             .fold((0, Vector::zero()), |acc, next| (acc.0 + 1, acc.1 + next));
 

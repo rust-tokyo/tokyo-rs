@@ -1,6 +1,14 @@
-use std::time::Instant;
 use common::models::*;
-use tokyo::{self, Handler, strategy::{behavior::{Chase, Behavior, Sequence, FireAt}, target::Target}, analyzer::Analyzer};
+use std::time::Instant;
+use tokyo::{
+    self,
+    analyzer::Analyzer,
+    strategy::{
+        behavior::{Behavior, Chase, FireAt, Sequence},
+        target::Target,
+    },
+    Handler,
+};
 
 #[derive(Default)]
 struct Player {

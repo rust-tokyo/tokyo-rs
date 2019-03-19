@@ -65,7 +65,9 @@ fn main() -> Result<(), String> {
             })
             .handler(
                 "/",
-                actix_web::fs::StaticFiles::new("../spectator/").unwrap().index_file("index.html"),
+                actix_web::fs::StaticFiles::new("../spectator/")
+                    .unwrap()
+                    .index_file("index.html"),
             )
             .resource("/{tail:.*}j", |r| {
                 r.method(Method::GET)

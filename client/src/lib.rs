@@ -74,11 +74,11 @@ where
             match server_to_client_msg {
                 ServerToClient::Id(player_id) => {
                     (*client_state).lock().unwrap().id = player_id;
-                }
+                },
                 ServerToClient::GameState(state) => {
                     (*client_state).lock().unwrap().game_state = state;
-                }
-                _ => {}
+                },
+                _ => {},
             }
 
             Ok(())
@@ -98,10 +98,8 @@ where
         utf8_percent_encode(name, DEFAULT_ENCODE_SET).to_string()
     ))?;
 
-    let client_state = Arc::new(Mutex::new(ClientState {
-        id: 0,
-        game_state: GameState::default(),
-    }));
+    let client_state =
+        Arc::new(Mutex::new(ClientState { id: 0, game_state: GameState::default() }));
 
     let client = tokio_ws::connect_async(url)
         .and_then(move |(websocket, _)| {

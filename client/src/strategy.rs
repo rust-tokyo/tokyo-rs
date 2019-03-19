@@ -17,9 +17,7 @@ pub struct Strategy {
 
 impl Strategy {
     pub fn new(branches: Vec<(Box<Condition>, Box<StrategyNode>)>) -> Self {
-        Self {
-            tree: StrategyNode::Branch(branches),
-        }
+        Self { tree: StrategyNode::Branch(branches) }
     }
 
     pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<PrioritizedBehavior> {
@@ -43,7 +41,7 @@ impl StrategyNode {
                     }
                 }
                 None
-            }
+            },
             StrategyNode::Leaf(leaf) => Some(leaf.clone()),
         }
     }
@@ -64,30 +62,18 @@ pub struct PrioritizedBehavior {
 
 impl PrioritizedBehavior {
     pub fn new() -> Self {
-        Self {
-            priority: Priority::Low,
-            behavior: Box::new(Noop {}),
-        }
+        Self { priority: Priority::Low, behavior: Box::new(Noop {}) }
     }
 
     pub fn with_low<T: Behavior>(behavior: T) -> Self {
-        Self {
-            priority: Priority::Low,
-            behavior: behavior.box_clone(),
-        }
+        Self { priority: Priority::Low, behavior: behavior.box_clone() }
     }
 
     pub fn with_medium<T: Behavior>(behavior: T) -> Self {
-        Self {
-            priority: Priority::Medium,
-            behavior: behavior.box_clone(),
-        }
+        Self { priority: Priority::Medium, behavior: behavior.box_clone() }
     }
 
     pub fn with_high<T: Behavior>(behavior: T) -> Self {
-        Self {
-            priority: Priority::High,
-            behavior: behavior.box_clone(),
-        }
+        Self { priority: Priority::High, behavior: behavior.box_clone() }
     }
 }

@@ -1,6 +1,6 @@
 use actix::Message;
 use std::collections::HashMap;
-use std::time::{SystemTime, Duration};
+use std::time::{Duration, SystemTime};
 
 pub const BULLET_RADIUS: f32 = 2.0;
 pub const BULLET_SPEED: f32 = 10.0;

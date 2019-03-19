@@ -1,6 +1,6 @@
 use common::models::*;
-use tokyo::{self, Handler};
 use rand::{thread_rng, Rng};
+use tokyo::{self, Handler};
 
 struct Player {
     id: Option<u32>,
@@ -10,11 +10,7 @@ struct Player {
 
 impl Player {
     fn new() -> Self {
-        Self {
-            id: None,
-            angle: 0.0,
-            counter: 0,
-        }
+        Self { id: None, angle: 0.0, counter: 0 }
     }
 }
 
@@ -40,5 +36,10 @@ impl Handler for Player {
 fn main() {
     println!("starting up...");
     let mut rng = thread_rng();
-    tokyo::run(&rng.gen::<u64>().to_string(), &format!("H4CK TH3 PL4N3T {}", rng.gen::<u8>()), Player::new()).unwrap();
+    tokyo::run(
+        &rng.gen::<u64>().to_string(),
+        &format!("H4CK TH3 PL4N3T {}", rng.gen::<u8>()),
+        Player::new(),
+    )
+    .unwrap();
 }

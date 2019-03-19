@@ -1,4 +1,4 @@
-use crate::analyzer::{Analyzer, player::Player};
+use crate::analyzer::{player::Player, Analyzer};
 use std::time::Duration;
 
 /// Target player.

@@ -27,15 +27,13 @@ impl Player {
             strategy: Strategy::new(vec![
                 (
                     Box::new(PlayerWithin { radius: 100.0 }),
-                    Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_high(
-                        FireAt::new(Target::Closest),
-                    ))),
+                    Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_high(FireAt::new(
+                        Target::Closest,
+                    )))),
                 ),
                 (
                     Box::new(Always {}),
-                    Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_medium(
-                        Dodge {},
-                    ))),
+                    Box::new(StrategyNode::Leaf(PrioritizedBehavior::with_medium(Dodge {}))),
                 ),
             ]),
             current_behavior: PrioritizedBehavior::new(),
@@ -64,10 +62,5 @@ impl Handler for Player {
 
 fn main() {
     println!("starting up...");
-    tokyo::run(
-        "403B9A2F-103F-4E43-8B52-1AC4870AA1E3",
-        "PEACEFUL",
-        Player::new(),
-    )
-    .unwrap();
+    tokyo::run("403B9A2F-103F-4E43-8B52-1AC4870AA1E3", "PEACEFUL", Player::new()).unwrap();
 }

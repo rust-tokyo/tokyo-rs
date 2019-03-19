@@ -144,25 +144,26 @@ impl Handler<SocketEvent> for GameActor {
                         existing_client.do_send(ClientStop {});
                     }
 
-                    let player_id = if let Some(player_id) = self.api_key_to_player_id.get(&key_clone) {
-                        addr_clone.do_send(ServerToClient::Id(*player_id));
-                        *player_id
-                    } else {
-                        // This was the first time this API key connected,
-                        // assign them a player ID and return it
-                        let player_id = self.player_id_counter;
-                        self.player_id_counter += 1;
-                        info!("API key {} gets player ID {}", key_clone, player_id);
+                    let player_id =
+                        if let Some(player_id) = self.api_key_to_player_id.get(&key_clone) {
+                            addr_clone.do_send(ServerToClient::Id(*player_id));
+                            *player_id
+                        } else {
+                            // This was the first time this API key connected,
+                            // assign them a player ID and return it
+                            let player_id = self.player_id_counter;
+                            self.player_id_counter += 1;
+                            info!("API key {} gets player ID {}", key_clone, player_id);
 
-                        self.api_key_to_player_id.insert(key_clone, player_id);
+                            self.api_key_to_player_id.insert(key_clone, player_id);
 
-                        self.msg_tx
-                            .send(GameLoopCommand::PlayerJoined(player_id))
-                            .expect("The game loop should always be receiving commands");
+                            self.msg_tx
+                                .send(GameLoopCommand::PlayerJoined(player_id))
+                                .expect("The game loop should always be receiving commands");
 
-                        addr_clone.do_send(ServerToClient::Id(player_id));
-                        player_id
-                    };
+                            addr_clone.do_send(ServerToClient::Id(player_id));
+                            player_id
+                        };
 
                     // Update team name and broadcast new team names list to all sockets.
                     self.team_names.insert(player_id, team_name);

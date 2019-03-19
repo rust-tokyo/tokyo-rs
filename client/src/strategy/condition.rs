@@ -1,5 +1,8 @@
 use crate::analyzer::Analyzer;
-use std::{time::{Duration, Instant}, fmt::Debug};
+use std::{
+    fmt::Debug,
+    time::{Duration, Instant},
+};
 
 pub trait Condition: Send + Debug {
     fn evaluate(&mut self, _: &Analyzer) -> bool;
@@ -68,16 +71,13 @@ impl Condition for AtInterval {
 
 impl AtInterval {
     pub fn new(interval: Duration) -> Self {
-        Self {
-            interval,
-            next: Instant::now(),
-        }
+        Self { interval, next: Instant::now() }
     }
 }
 
 #[derive(Debug)]
 pub struct PlayerWithin {
-    pub radius: f32
+    pub radius: f32,
 }
 
 impl Condition for PlayerWithin {
@@ -97,7 +97,7 @@ impl Condition for PlayerWithHigherScore {
 
 #[derive(Debug)]
 pub struct BulletWithin {
-    pub radius: f32
+    pub radius: f32,
 }
 
 impl Condition for BulletWithin {

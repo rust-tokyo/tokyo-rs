@@ -47,11 +47,7 @@ impl Analyzer {
         }
         self.players = players;
 
-        self.bullets = state
-            .bullets
-            .iter()
-            .map(|state| Bullet::new(&state))
-            .collect();
+        self.bullets = state.bullets.iter().map(|state| Bullet::new(&state)).collect();
 
         self.last_update = time;
     }
@@ -93,10 +89,7 @@ impl Analyzer {
     }
 
     pub fn player_highest_score(&self) -> Option<&Player> {
-        self.other_players()
-            .iter()
-            .max_by_key(|player| player.score())
-            .map(|player| *player)
+        self.other_players().iter().max_by_key(|player| player.score()).map(|player| *player)
     }
 
     pub fn player_highest_score_after(&self, after: Duration) -> Option<&Player> {
@@ -115,21 +108,13 @@ impl Analyzer {
     }
 
     pub fn own_bullets_count(&self) -> usize {
-        self.bullets
-            .iter()
-            .filter(|bullet| {
-                bullet.player_id == self.own_player_id
-            })
-            .count()
+        self.bullets.iter().filter(|bullet| bullet.player_id == self.own_player_id).count()
     }
 
     pub fn bullets_colliding(&self, during: Duration) -> Vec<&Bullet> {
         self.bullets
             .iter()
-            .filter(|bullet| {
-                self.own_player()
-                    .is_colliding_during(bullet, during.clone())
-            })
+            .filter(|bullet| self.own_player().is_colliding_during(bullet, during.clone()))
             .collect::<Vec<_>>()
     }
 

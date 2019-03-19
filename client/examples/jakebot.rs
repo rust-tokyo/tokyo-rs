@@ -1,7 +1,7 @@
 use common::models::*;
 use euclid::Angle;
-use tokyo::{self, Handler, analyzer::Analyzer, geom::*};
 use std::time::Instant;
+use tokyo::{self, analyzer::Analyzer, geom::*, Handler};
 
 enum State {
     Spray(usize, Angle<f32>),
