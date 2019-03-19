@@ -191,7 +191,6 @@
                 if (json.e === "teamnames") {
                     team_names = json.data;
                 } else if (json.e === "state") {
-                    // console.log(json.data);
                     const data = json.data;
 
                     ctx.clearRect(0, 0, c.width, c.height);
@@ -226,7 +225,6 @@
                             chart.innerHTML += `<span class="score">${String(data.scoreboard[player_id]).padEnd(3)}</span> - <span class="team"><span class="name">${team_names[player_id]}</span> <span class="id">${player_id}</span></span>\n`;
                         }
                         last_drawn_scoreboard = data.scoreboard;
-                        console.log("new scoreboard");
                     }
                 }
             });
