@@ -38,9 +38,6 @@ impl Handler for Player {
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand> {
         self.analyzer.set_own_player_id(state.id);
         self.analyzer.push_state(&state.game_state, Instant::now());
-        if self.analyzer.is_dead() {
-            return None;
-        }
 
         let me = self.analyzer.own_player();
         if let Some(State::Spray(count, angle)) = self.state {

@@ -20,12 +20,17 @@ pub mod geom;
 /// with the game server.
 pub trait Handler {
     /// An opportunity, provided multiple times a second, to analyze the current
-    /// state of the world and do a single action based on its state.
+    /// state of the world and do a single action based on its state. It's not
+    /// called when the player is dead and waiting to be respawn.
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand>;
 }
 
 fn log_err<E: Debug>(e: E) {
     eprintln!("{:?}", e)
+}
+
+fn is_player_alive(state: &ClientState) -> bool {
+    state.game_state.players.iter().find(|player| player.id == state.id).is_some()
 }
 
 fn build_game_loop<H, S, D>(
@@ -42,8 +47,12 @@ where
     tokio::timer::Interval::new_interval(MIN_COMMAND_INTERVAL)
         // Give the user a chance to take a turn
         .filter_map(move |_| {
-            let client_state = client_state.lock().unwrap();
-            handler.tick(&*client_state)
+            let client_state = &*client_state.lock().unwrap();
+            if is_player_alive(client_state) {
+                handler.tick(client_state)
+            } else {
+                None
+            }
         })
         // Convert their command to a websocket message
         .map(move |command: GameCommand| {

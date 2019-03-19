@@ -60,12 +60,9 @@ impl Analyzer {
         self.players.get(&id)
     }
 
-    // TODO: clean up.
-    pub fn is_dead(&self) -> bool {
-        !self.players.contains_key(&self.own_player_id)
-    }
-
     pub fn own_player(&self) -> &Player {
+        // This unwrap() should succeed as long as you don't modify
+        // tokyo::build_game_loop function.
         self.player(self.own_player_id).unwrap()
     }
 
