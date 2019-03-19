@@ -1,117 +1,321 @@
 use crate::{geom::*, radar::Radar};
-use common::models::{ClientState, GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
+use common::models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
 use rand::{thread_rng, Rng};
 use std::{
     collections::VecDeque,
     time::{Duration, Instant},
 };
 
-type BehaviorVec = Vec<(Behavior, Box<Condition>)>;
-
 pub struct Strategy {
-    behaviors: BehaviorVec,
-    next_commands: VecDeque<GameCommand>,
-    radar: Radar,
+    tree: StrategyNode,
 }
 
 impl Strategy {
-    pub fn new(behaviors: BehaviorVec) -> Self {
+    pub fn new(branches: Vec<(Box<Condition>, Box<StrategyNode>)>) -> Self {
         Self {
-            behaviors,
-            next_commands: VecDeque::new(),
-            radar: Radar::new(),
+            tree: StrategyNode::Branch(branches),
         }
     }
 
-    pub fn push_state(&mut self, state: &ClientState) {
-        self.radar.set_own_player_id(state.id);
-        self.radar.push_state(&state.game_state, Instant::now());
+    pub fn next_behavior(&mut self, radar: &Radar) -> Option<(Priority, Box<Behavior>)> {
+        self.tree.next_behavior(radar)
     }
+}
 
-    pub fn next_command(&mut self) -> Option<GameCommand> {
-        if let Some(next_command) = self.next_commands.pop_front() {
-            return Some(next_command);
-        }
+pub enum StrategyNode {
+    Branch(Vec<(Box<Condition>, Box<StrategyNode>)>),
+    Leaf((Priority, Box<Behavior>)),
+}
 
-        match self.next_behavior() {
-            Behavior::Random => {
-                let mut rng = thread_rng();
-                match rng.gen_range(0, 4) {
-                    0 => None,
-                    1 => Some(GameCommand::Rotate(
-                        rng.gen_range(0.0, 2.0 * std::f32::consts::PI),
-                    )),
-                    2 => Some(GameCommand::Forward(
-                        rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED),
-                    )),
-                    3 => Some(GameCommand::Fire),
-                    _ => unreachable!(),
+impl StrategyNode {
+    pub fn next_behavior(&mut self, radar: &Radar) -> Option<(Priority, Box<Behavior>)> {
+        match self {
+            StrategyNode::Branch(nodes) => {
+                for (condition, node) in nodes.iter_mut() {
+                    if condition.evaluate() {
+                        return node.next_behavior(radar);
+                    }
                 }
+                None
             }
-            Behavior::ChaseFor(target) => {
-                let angle = self.radar.angle_to(target);
-                if (self.radar.own_player().angle - angle).abs().get() > 10.0 {
-                    Some(GameCommand::Rotate(angle.positive().get()))
-                } else {
-                    Some(GameCommand::Forward(PLAYER_MAX_SPEED))
-                }
-            }
-            Behavior::FireAt(target) => {
-                let angle = self.radar.angle_to(target);
-                if (self.radar.own_player().angle - angle).abs().get() > 1.0 {
-                    Some(GameCommand::Rotate(angle.positive().get()))
-                } else {
-                    Some(GameCommand::Fire)
-                }
-            }
-            Behavior::Dodge => {
-                // The provided implementation only avoids a single collision
-                // occurrence. It also doesn't check the consequence of
-                // performing the dodge action.
-                let dodge_until = Instant::now() + Duration::from_secs(1);
-                if let Some(bullet) = self.radar.bullets_to_collide(dodge_until).iter().next() {
-                    // Move 2 step forward to the direction to move away from the bullet trajectory.
-                    self.next_commands
-                        .push_back(GameCommand::Forward(PLAYER_MAX_SPEED));
-                    self.next_commands
-                        .push_back(GameCommand::Forward(PLAYER_MAX_SPEED));
-                    Some(GameCommand::Rotate(
-                        bullet.velocity.tangent().positive().get(),
-                    ))
-                } else {
-                    None
-                }
-            }
-            _ => None,
+            StrategyNode::Leaf(leaf) => Some(leaf.clone())
         }
     }
+}
 
-    fn next_behavior(&mut self) -> Behavior {
-        for (behavior, condition) in &mut self.behaviors {
-            if condition.evaluate() {
-                return behavior.clone();
-            }
-        }
-        Behavior::Hold
+#[derive(Clone, PartialEq, PartialOrd)]
+pub enum Priority {
+    Low = 0,
+    Medium = 1,
+    High = 2,
+}
+
+pub trait Behavior {
+    fn next_command(&mut self, _: &Radar) -> Option<GameCommand>;
+    fn box_clone(&self) -> Box<Behavior>;
+}
+
+impl Clone for Box<Behavior> {
+    fn clone(&self) -> Self {
+        self.box_clone()
     }
 }
 
 #[derive(Clone)]
-pub enum Behavior {
-    /// Do nothing.
-    Hold,
+pub struct Sequence {
+    inner: VecDeque<Box<Behavior>>,
+}
 
-    /// Do something random.
-    Random,
+impl Behavior for Sequence {
+    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+        while let Some(next) = self.inner.front_mut() {
+            if let Some(command) = next.next_command(radar) {
+                return Some(command)
+            }
+            self.inner.pop_front();
+        }
+        None
+    }
 
-    /// Keep chasing for the target player.
-    ChaseFor(u32),
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
 
-    /// Fire at the target player.
-    FireAt(u32),
+impl Sequence {
+    pub fn new() -> Self {
+        Self {
+            inner: VecDeque::new(),
+        }
+    }
 
-    /// Try to minimize number of hits while in this mode.
-    Dodge,
+    pub fn two<T1, T2>(b1: T1, b2: T2) -> Self
+    where T1: Behavior, T2: Behavior {
+        Self {
+            inner: vec![b1.box_clone(), b2.box_clone()].into(),
+        }
+    }
+
+    pub fn three<T1, T2, T3>(b1: T1, b2: T2, b3: T3) -> Self
+    where T1: Behavior, T2: Behavior, T3: Behavior {
+        Self {
+            inner: vec![b1.box_clone(), b2.box_clone(), b3.box_clone()].into(),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Noop;
+
+impl Behavior for Noop {
+    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+        None
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
+pub struct Forward {
+    pub distance: f32,
+}
+
+impl Behavior for Forward {
+    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+        if self.distance > 0.0 {
+            let next_move = PLAYER_MAX_SPEED.max(self.distance);
+            self.distance -= next_move;
+            Some(GameCommand::Forward(next_move))
+        } else {
+            None
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+impl Forward {
+    pub fn with_steps(steps: u32) -> Self {
+        Self { distance: PLAYER_MAX_SPEED * steps as f32 }
+    }
+}
+
+#[derive(Clone)]
+pub struct Rotate {
+    angle: Radian,
+    margin: Radian,
+}
+
+impl Behavior for Rotate {
+    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+        if (radar.own_player().angle - self.angle).abs() > self.margin {
+            Some(GameCommand::Rotate(self.angle.positive().get()))
+        } else {
+            None
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+impl Rotate {
+    pub fn new(angle: Radian) -> Self {
+        Self::with_margin_degrees(angle, 0.1)
+    }
+
+    pub fn with_margin_degrees(angle: Radian, margin_degrees: f32) -> Self {
+        Self {
+            angle,
+            margin: Radian::degrees(margin_degrees),
+        }
+    }
+}
+
+#[derive(Clone)]
+pub struct Fire {
+    pub times: u32,
+}
+
+impl Behavior for Fire {
+    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+        if self.times > 0 {
+            self.times -= 1;
+            Some(GameCommand::Fire)
+        } else {
+            None
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+impl Fire {
+    pub fn once() -> Self {
+        Self { times: 1 }
+    }
+}
+
+#[derive(Clone)]
+pub struct FireAt {
+    pub target: u32,
+    pub times: u32,
+}
+
+impl Behavior for FireAt {
+    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+        if self.times > 0 {
+            self.times -= 1;
+            let angle = radar.angle_to(self.target);
+            Sequence::two(
+                    Rotate::with_margin_degrees(angle, 5.0),
+                    Fire::once(),
+            ).next_command(radar)
+        } else {
+            None
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+impl FireAt {
+    pub fn once(target: u32) -> Self {
+        Self { target, times: 1 }
+    }
+}
+
+#[derive(Clone)]
+struct Random;
+
+impl Behavior for Random {
+    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+        let mut rng = thread_rng();
+        match rng.gen_range(0, 4) {
+            0 => None,
+            1 => Some(GameCommand::Rotate(
+                rng.gen_range(0.0, 2.0 * std::f32::consts::PI),
+            )),
+            2 => Some(GameCommand::Forward(
+                rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED),
+            )),
+            3 => Some(GameCommand::Fire),
+            _ => unreachable!(),
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
+pub struct Chase {
+    pub target: u32,
+}
+
+impl Behavior for Chase {
+    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+        let distance_to_target = radar.player(self.target).position.distance(&radar.own_player().position);
+        if distance_to_target > 10.0 {
+            let angle = radar.angle_to(self.target);
+            Sequence::two(
+                Rotate::with_margin_degrees(angle, 10.0),
+                Forward::with_steps(1),
+            ).next_command(radar)
+        } else {
+            None
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+#[derive(Clone)]
+pub struct Dodge {
+    target: u32,
+    next: Sequence,
+}
+
+impl Behavior for Dodge {
+    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+        if let Some(next_command) = self.next.next_command(radar) {
+            return Some(next_command);
+        }
+
+        let dodge_until = Instant::now() + Duration::from_secs(1);
+        if let Some(bullet) = radar.bullets_to_collide(dodge_until).iter().next() {
+            let angle = bullet.velocity.tangent();
+            self.next = Sequence::two(
+                    Rotate::with_margin_degrees(angle, 30.0),
+                    Forward::with_steps(1),
+            );
+            self.next.next_command(radar)
+        } else {
+            None
+        }
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
+    }
+}
+
+impl Dodge {
+    pub fn new(target: u32) -> Self {
+        Self { target, next: Sequence::new() }
+    }
 }
 
 pub trait Condition: Send {
@@ -143,7 +347,7 @@ impl Condition for AtInterval {
 }
 
 impl AtInterval {
-    pub fn with(interval: Duration) -> Self {
+    pub fn new(interval: Duration) -> Self {
         Self {
             interval,
             next: Instant::now(),

@@ -1,24 +1,27 @@
+use std::time::Instant;
 use common::models::*;
-use tokyo::{self, Handler, strategy::*};
+use tokyo::{self, Handler, strategy::{Chase, Behavior}, radar::Radar};
 
 struct Player {
-    strategy: Strategy,
+    radar: Radar,
+    behavior: Chase,
 }
 
 impl Player {
     fn new() -> Self {
         Self {
-            strategy: Strategy::new(vec![
-                (Behavior::ChaseFor(0), Box::new(Always {})),
-            ]),
+            radar: Radar::new(),
+            behavior: Chase { target: 0 },
         }
     }
 }
 
 impl Handler for Player {
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand> {
-        self.strategy.push_state(state);
-        self.strategy.next_command()
+        self.radar.set_own_player_id(state.id);
+        self.radar.push_state(&state.game_state, Instant::now());
+
+        self.behavior.next_command(&self.radar)
     }
 }
 

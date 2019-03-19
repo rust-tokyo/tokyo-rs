@@ -5,6 +5,7 @@ use crate::{
 use common::models::GameState;
 use std::{collections::HashMap, time::Instant};
 
+// TODO: Rename to Analyzer.
 pub struct Radar {
     own_player_id: u32,
     players: HashMap<u32, Player>,

@@ -5,6 +5,7 @@ use std::{
     time::{Duration, Instant},
 };
 
+// TODO: Merge into radar.rs
 pub struct Player {
     pub id: u32,
     pub angle: Radian,
