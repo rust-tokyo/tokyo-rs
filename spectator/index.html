@@ -186,10 +186,10 @@
                 }
             }
 
+            var last_drawn_scoreboard = {};
             connect(function (json) {
                 if (json.e === "teamnames") {
                     team_names = json.data;
-                    console.log("got new team_names", team_names);
                 } else if (json.e === "state") {
                     // console.log(json.data);
                     const data = json.data;
@@ -219,10 +219,14 @@
                         new Bullet(bullet).draw(ctx);
                     }
 
-                    var sorted_players = Object.keys(data.scoreboard).sort(function(a,b){return data.scoreboard[b]-data.scoreboard[a]});
-                    chart.innerHTML = "";
-                    for (const player_id of sorted_players) {
-                        chart.innerHTML += `<span class="score">${data.scoreboard[player_id].padEnd(3)}</span> - <span class="team"><span class="name">${team_names[player_id]}</span> <span class="id">${player_id}</span></span>\n`;
+                    if (JSON.stringify(data.scoreboard) !== JSON.stringify(last_drawn_scoreboard)) {
+                        var sorted_players = Object.keys(data.scoreboard).sort(function(a,b){return data.scoreboard[b]-data.scoreboard[a]});
+                        chart.innerHTML = "";
+                        for (const player_id of sorted_players) {
+                            chart.innerHTML += `<span class="score">${String(data.scoreboard[player_id]).padEnd(3)}</span> - <span class="team"><span class="name">${team_names[player_id]}</span> <span class="id">${player_id}</span></span>\n`;
+                        }
+                        last_drawn_scoreboard = data.scoreboard;
+                        console.log("new scoreboard");
                     }
                 }
             });
