@@ -63,10 +63,6 @@ fn main() -> Result<(), String> {
                 r.method(Method::GET)
                     .with(controllers::api::spectate_handler);
             })
-            .handler(
-                "/static",
-                actix_web::fs::StaticFiles::new("frontend/resources/public").unwrap(),
-            )
             .resource("/", |r| {
                 r.name("home");
                 r.method(Method::GET)

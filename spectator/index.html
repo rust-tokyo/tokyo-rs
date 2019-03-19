@@ -74,13 +74,13 @@
             }
             var team_names = {};
 
-            var ctx = c.getContext("2d");
+            var ctx = c.getContext("2d", { alpha: false });
 
             function connect(handler) {
                 websocket_status.innerText = "connecting...";
                 websocket_status.style.borderColor = "gray";
 
-                const socket = new WebSocket('ws://localhost:3000/spectate');
+                const socket = new WebSocket(`ws://${window.location.host}/spectate`);
                 socket.addEventListener('open', function (event) {
                     websocket_status.innerText = "connected";
                     websocket_status.style.borderColor = "white";
@@ -109,8 +109,8 @@
             class Ship {
                 constructor(obj) {
                     this.id = obj.id;
-                    this.x = obj.x;
-                    this.y = obj.y;
+                    this.x = Math.floor(obj.x);
+                    this.y = Math.floor(obj.y);
                     this.angle = obj.angle;
                 }
 
