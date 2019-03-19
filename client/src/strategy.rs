@@ -32,7 +32,7 @@ impl StrategyNode {
         match self {
             StrategyNode::Branch(nodes) => {
                 for (condition, node) in nodes.iter_mut() {
-                    if condition.evaluate() {
+                    if condition.evaluate(analyzer) {
                         return node.next_behavior(analyzer);
                     }
                 }
@@ -294,7 +294,7 @@ impl Behavior for Dodge {
             return Some(next_command);
         }
 
-        if let Some(bullet) = analyzer.colliding_bullets(Duration::from_secs(1)).iter().next() {
+        if let Some(bullet) = analyzer.bullets_colliding(Duration::from_secs(1)).iter().next() {
             let angle = bullet.velocity.tangent();
             self.next = Sequence::two(
                     Rotate::with_margin_degrees(angle, 30.0),
@@ -318,13 +318,45 @@ impl Dodge {
 }
 
 pub trait Condition: Send {
-    fn evaluate(&mut self) -> bool;
+    fn evaluate(&mut self, _: &Analyzer) -> bool;
 }
 
 pub struct Always;
 impl Condition for Always {
-    fn evaluate(&mut self) -> bool {
+    fn evaluate(&mut self, _: &Analyzer) -> bool {
         true
+    }
+}
+
+pub struct And<T1, T2> {
+    lhs: T1,
+    rhs: T2,
+}
+
+impl<T1: Condition, T2: Condition> Condition for And<T1, T2> {
+    fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
+        self.lhs.evaluate(analyzer) && self.rhs.evaluate(analyzer)
+    }
+}
+
+pub struct Or<T1, T2> {
+    lhs: T1,
+    rhs: T2,
+}
+
+impl<T1: Condition, T2: Condition> Condition for Or<T1, T2> {
+    fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
+        self.lhs.evaluate(analyzer) || self.rhs.evaluate(analyzer)
+    }
+}
+
+pub struct Not<T> {
+    inner: T,
+}
+
+impl<T: Condition> Condition for Not<T> {
+    fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
+        !self.inner.evaluate(analyzer)
     }
 }
 
@@ -334,7 +366,7 @@ pub struct AtInterval {
 }
 
 impl Condition for AtInterval {
-    fn evaluate(&mut self) -> bool {
+    fn evaluate(&mut self, _: &Analyzer) -> bool {
         let now = Instant::now();
         if now >= self.next {
             self.next += self.interval;
@@ -351,5 +383,32 @@ impl AtInterval {
             interval,
             next: Instant::now(),
         }
+    }
+}
+
+pub struct PlayerWithin {
+    pub radius: f32
+}
+
+impl Condition for PlayerWithin {
+    fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
+        analyzer.players_within(self.radius).len() > 0
+    }
+}
+
+pub struct PlayerWithHigherScore;
+impl Condition for PlayerWithHigherScore {
+    fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
+        analyzer.player_with_highest_score().id != analyzer.own_player().id
+    }
+}
+
+pub struct BulletWithin {
+    pub radius: f32
+}
+
+impl Condition for BulletWithin {
+    fn evaluate(&mut self, analyzer: &Analyzer) -> bool {
+        analyzer.bullets_within(self.radius).len() > 0
     }
 }

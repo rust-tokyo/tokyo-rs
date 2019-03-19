@@ -67,7 +67,16 @@ impl Analyzer {
             .angle_to(&self.player(target).position)
     }
 
-    pub fn colliding_bullets(&self, during: Duration) -> Vec<&Bullet> {
+    pub fn players_within(&self, radius: f32) -> Vec<&Player> {
+        let my_position = self.own_player().position;
+        self.players.values().filter(|player| my_position.distance(&player.position) <= radius).collect::<Vec<_>>()
+    }
+
+    pub fn player_with_highest_score(&self) -> &Player {
+        self.players.values().max_by_key(|player| player.score()).unwrap()
+    }
+
+    pub fn bullets_colliding(&self, during: Duration) -> Vec<&Bullet> {
         self.bullets
             .iter()
             .filter(|bullet| {
@@ -75,6 +84,11 @@ impl Analyzer {
                     .is_colliding_during(bullet, during.clone())
             })
             .collect::<Vec<_>>()
+    }
+
+    pub fn bullets_within(&self, radius: f32) -> Vec<&Bullet> {
+        let my_position = self.own_player().position;
+        self.bullets.iter().filter(|bullet| my_position.distance(&bullet.position) <= radius).collect::<Vec<_>>()
     }
 }
 
@@ -128,6 +142,10 @@ impl Player {
         self.trajectory.push(self.position.clone(), time);
         self.score_history
             .push(*scoreboard.get(&state.id).unwrap(), time);
+    }
+
+    pub fn score(&self) -> u32 {
+        self.score_history.last_score()
     }
 
     pub fn is_colliding_after(&self, bullet: &Bullet, after: Duration) -> bool {
