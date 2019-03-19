@@ -18,16 +18,16 @@ impl AsSecsF32 for Duration {
 pub trait PointExt {
     fn point(&self) -> &Point;
 
-    fn distance(&self, other: &Point) -> f32 {
-        (*other - *self.point()).length()
+    fn distance(&self, other: &PointExt) -> f32 {
+        (*other.point() - *self.point()).length()
     }
 
-    fn angle_to(&self, other: &Point) -> Radian {
-        (*other - *self.point()).angle_from_x_axis()
+    fn angle_to(&self, other: &PointExt) -> Radian {
+        (*other.point() - *self.point()).angle_from_x_axis()
     }
 
-    fn velocity_to(&self, other: &Point, dt: Duration) -> Vector {
-        (*other - *self.point()) / dt.as_secs_f32()
+    fn velocity_to(&self, other: &PointExt, dt: Duration) -> Vector {
+        (*other.point() - *self.point()) / dt.as_secs_f32()
     }
 
     fn project(&self, vel: &Vector, dt: Duration) -> Point {
@@ -75,4 +75,8 @@ impl RadianExt for Radian {
     fn radian(&self) -> &Radian {
         self
     }
+}
+
+pub trait Positioned {
+    fn position(&self) -> Point;
 }

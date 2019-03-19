@@ -169,7 +169,8 @@ impl Behavior for FireAt {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
         if self.times > 0 {
             self.times -= 1;
-            let angle = analyzer.angle_to(self.target.get(analyzer));
+            let target = self.target.get(analyzer);
+            let angle = analyzer.own_player().angle_to(target);
             Sequence::two(
                     Rotate::with_margin_degrees(angle, 5.0),
                     Fire::once(),
@@ -224,7 +225,7 @@ impl Behavior for Chase {
         let target = self.target.get(analyzer);
         let distance_to_target = target.position.distance(&analyzer.own_player().position);
         if distance_to_target > 10.0 {
-            let angle = analyzer.angle_to(target);
+            let angle = analyzer.own_player().angle_to(target);
             Sequence::two(
                 Rotate::with_margin_degrees(angle, 10.0),
                 Forward::with_steps(1),

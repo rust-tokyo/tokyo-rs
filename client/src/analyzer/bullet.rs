@@ -1,4 +1,4 @@
-use crate::{analyzer::Positioned, geom::*};
+use crate::geom::*;
 use common::models::{BulletState, BULLET_SPEED};
 use std::time::Duration;
 
@@ -22,8 +22,14 @@ impl Bullet {
     }
 }
 
-impl Positioned for Bullet {
-    fn position(&self) -> Point {
-        self.position
+impl PointExt for Bullet {
+    fn point(&self) -> &Point {
+        &self.position
+    }
+}
+
+impl VectorExt for Bullet {
+    fn vector(&self) -> &Vector {
+        &self.velocity
     }
 }

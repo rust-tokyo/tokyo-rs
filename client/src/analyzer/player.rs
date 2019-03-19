@@ -1,5 +1,5 @@
 use crate::{
-    analyzer::{bullet::Bullet, Positioned, ANALYSIS_INTERVAL},
+    analyzer::{bullet::Bullet, ANALYSIS_INTERVAL},
     geom::*,
 };
 use common::models::{PlayerState, BULLET_RADIUS, PLAYER_RADIUS};
@@ -76,9 +76,9 @@ impl Player {
     }
 }
 
-impl Positioned for Player {
-    fn position(&self) -> Point {
-        self.position
+impl PointExt for Player {
+    fn point(&self) -> &Point {
+        &self.position
     }
 }
 

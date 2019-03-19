@@ -57,10 +57,6 @@ impl Analyzer {
         self.own_player_id = id;
     }
 
-    pub fn angle_to(&self, target: &Positioned) -> Radian {
-        self.own_player().position.angle_to(&target.position())
-    }
-
     pub fn player<'a>(&'a self, id: u32) -> &'a Player {
         self.players.get(&id).unwrap()
     }
@@ -123,8 +119,4 @@ impl Analyzer {
             .filter(|bullet| my_position.distance(&bullet.position) <= radius)
             .collect::<Vec<_>>()
     }
-}
-
-pub trait Positioned {
-    fn position(&self) -> Point;
 }
