@@ -1,4 +1,4 @@
-use crate::{geom::*, radar::Radar};
+use crate::{geom::*, analyzer::Analyzer};
 use common::models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
 use rand::{thread_rng, Rng};
 use std::{
@@ -17,8 +17,8 @@ impl Strategy {
         }
     }
 
-    pub fn next_behavior(&mut self, radar: &Radar) -> Option<(Priority, Box<Behavior>)> {
-        self.tree.next_behavior(radar)
+    pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<(Priority, Box<Behavior>)> {
+        self.tree.next_behavior(analyzer)
     }
 }
 
@@ -28,12 +28,12 @@ pub enum StrategyNode {
 }
 
 impl StrategyNode {
-    pub fn next_behavior(&mut self, radar: &Radar) -> Option<(Priority, Box<Behavior>)> {
+    pub fn next_behavior(&mut self, analyzer: &Analyzer) -> Option<(Priority, Box<Behavior>)> {
         match self {
             StrategyNode::Branch(nodes) => {
                 for (condition, node) in nodes.iter_mut() {
                     if condition.evaluate() {
-                        return node.next_behavior(radar);
+                        return node.next_behavior(analyzer);
                     }
                 }
                 None
@@ -51,7 +51,7 @@ pub enum Priority {
 }
 
 pub trait Behavior {
-    fn next_command(&mut self, _: &Radar) -> Option<GameCommand>;
+    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand>;
     fn box_clone(&self) -> Box<Behavior>;
 }
 
@@ -67,9 +67,9 @@ pub struct Sequence {
 }
 
 impl Behavior for Sequence {
-    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
         while let Some(next) = self.inner.front_mut() {
-            if let Some(command) = next.next_command(radar) {
+            if let Some(command) = next.next_command(analyzer) {
                 return Some(command)
             }
             self.inner.pop_front();
@@ -108,7 +108,7 @@ impl Sequence {
 pub struct Noop;
 
 impl Behavior for Noop {
-    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
         None
     }
 
@@ -123,7 +123,7 @@ pub struct Forward {
 }
 
 impl Behavior for Forward {
-    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
         if self.distance > 0.0 {
             let next_move = PLAYER_MAX_SPEED.max(self.distance);
             self.distance -= next_move;
@@ -151,8 +151,8 @@ pub struct Rotate {
 }
 
 impl Behavior for Rotate {
-    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
-        if (radar.own_player().angle - self.angle).abs() > self.margin {
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
+        if (analyzer.own_player().angle - self.angle).abs() > self.margin {
             Some(GameCommand::Rotate(self.angle.positive().get()))
         } else {
             None
@@ -183,7 +183,7 @@ pub struct Fire {
 }
 
 impl Behavior for Fire {
-    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
         if self.times > 0 {
             self.times -= 1;
             Some(GameCommand::Fire)
@@ -210,14 +210,14 @@ pub struct FireAt {
 }
 
 impl Behavior for FireAt {
-    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
         if self.times > 0 {
             self.times -= 1;
-            let angle = radar.angle_to(self.target);
+            let angle = analyzer.angle_to(self.target);
             Sequence::two(
                     Rotate::with_margin_degrees(angle, 5.0),
                     Fire::once(),
-            ).next_command(radar)
+            ).next_command(analyzer)
         } else {
             None
         }
@@ -238,7 +238,7 @@ impl FireAt {
 struct Random;
 
 impl Behavior for Random {
-    fn next_command(&mut self, _: &Radar) -> Option<GameCommand> {
+    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
         let mut rng = thread_rng();
         match rng.gen_range(0, 4) {
             0 => None,
@@ -264,14 +264,14 @@ pub struct Chase {
 }
 
 impl Behavior for Chase {
-    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
-        let distance_to_target = radar.player(self.target).position.distance(&radar.own_player().position);
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
+        let distance_to_target = analyzer.player(self.target).position.distance(&analyzer.own_player().position);
         if distance_to_target > 10.0 {
-            let angle = radar.angle_to(self.target);
+            let angle = analyzer.angle_to(self.target);
             Sequence::two(
                 Rotate::with_margin_degrees(angle, 10.0),
                 Forward::with_steps(1),
-            ).next_command(radar)
+            ).next_command(analyzer)
         } else {
             None
         }
@@ -289,19 +289,19 @@ pub struct Dodge {
 }
 
 impl Behavior for Dodge {
-    fn next_command(&mut self, radar: &Radar) -> Option<GameCommand> {
-        if let Some(next_command) = self.next.next_command(radar) {
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
+        if let Some(next_command) = self.next.next_command(analyzer) {
             return Some(next_command);
         }
 
         let dodge_until = Instant::now() + Duration::from_secs(1);
-        if let Some(bullet) = radar.bullets_to_collide(dodge_until).iter().next() {
+        if let Some(bullet) = analyzer.bullets_to_collide(dodge_until).iter().next() {
             let angle = bullet.velocity.tangent();
             self.next = Sequence::two(
                     Rotate::with_margin_degrees(angle, 30.0),
                     Forward::with_steps(1),
             );
-            self.next.next_command(radar)
+            self.next.next_command(analyzer)
         } else {
             None
         }
