@@ -2,7 +2,7 @@ use crate::{
     analyzer::{bullet::Bullet, player::Player},
     geom::*,
 };
-use common::models::GameState;
+use common::models::ClientState;
 use std::{
     collections::HashMap,
     time::{Duration, Instant},
@@ -34,26 +34,24 @@ impl Default for Analyzer {
 }
 
 impl Analyzer {
-    pub fn push_state(&mut self, state: &GameState, time: Instant) {
+    pub fn push_state(&mut self, state: &ClientState, time: Instant) {
+        self.own_player_id = state.id;
+
         let mut players = HashMap::new();
-        for player_state in state.players.iter() {
+        for player_state in state.game_state.players.iter() {
             let player = if let Some(mut prev_player) = self.players.remove(&player_state.id) {
-                prev_player.push_state(&player_state, &state.scoreboard, time);
+                prev_player.push_state(&player_state, &state.game_state.scoreboard, time);
                 prev_player
             } else {
-                Player::with_state(&player_state, &state.scoreboard, time)
+                Player::with_state(&player_state, &state.game_state.scoreboard, time)
             };
             players.insert(player.id, player);
         }
         self.players = players;
 
-        self.bullets = state.bullets.iter().map(|state| Bullet::new(&state)).collect();
+        self.bullets = state.game_state.bullets.iter().map(|state| Bullet::new(&state)).collect();
 
         self.last_update = time;
-    }
-
-    pub fn set_own_player_id(&mut self, id: u32) {
-        self.own_player_id = id;
     }
 
     pub fn player(&self, id: u32) -> Option<&Player> {

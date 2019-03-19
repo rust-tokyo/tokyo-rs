@@ -47,8 +47,7 @@ impl Player {
 
 impl Handler for Player {
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand> {
-        self.analyzer.set_own_player_id(state.id);
-        self.analyzer.push_state(&state.game_state, Instant::now());
+        self.analyzer.push_state(state, Instant::now());
 
         let next_command = self.current_behavior.behavior.next_command(&self.analyzer);
         if let Some(next_behavior) = self.strategy.next_behavior(&self.analyzer) {

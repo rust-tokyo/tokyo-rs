@@ -28,8 +28,7 @@ fn chase() -> Box<Behavior> {
 
 impl Handler for Player {
     fn tick(&mut self, state: &ClientState) -> Option<GameCommand> {
-        self.analyzer.set_own_player_id(state.id);
-        self.analyzer.push_state(&state.game_state, Instant::now());
+        self.analyzer.push_state(state, Instant::now());
 
         if let Some(command) = self.current_behavior.next_command(&self.analyzer) {
             Some(command)
