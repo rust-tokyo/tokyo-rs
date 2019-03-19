@@ -12,7 +12,7 @@ pub mod bullet;
 pub mod player;
 
 // Collision detection etc is done at this compute interval.
-pub const ANALYSIS_INTERVAL: Duration = Duration::from_millis(33);
+pub const ANALYSIS_INTERVAL: Duration = Duration::from_millis(10);
 
 #[derive(Debug)]
 pub struct Analyzer {

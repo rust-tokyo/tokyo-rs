@@ -64,7 +64,7 @@ impl Player {
 
     pub fn is_colliding_during(&self, bullet: &Bullet, during: Duration) -> bool {
         let num_analysis = (during.as_millis() / ANALYSIS_INTERVAL.as_millis()) as u32;
-        (1..num_analysis + 1)
+        (1..=num_analysis)
             .map(|tick| self.is_colliding_after(bullet, ANALYSIS_INTERVAL * tick))
             .any(|hit| hit)
     }
