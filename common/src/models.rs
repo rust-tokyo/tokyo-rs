@@ -9,7 +9,7 @@ pub const PLAYER_MIN_SPEED: f32 = -1.0;
 pub const PLAYER_MAX_SPEED: f32 = 1.0;
 
 // Send commands more frequently than this interval, and consequences.
-pub const MIN_COMMAND_INTERVAL: Duration = Duration::from_millis(100);
+pub const MIN_COMMAND_INTERVAL: Duration = Duration::from_millis(50);
 
 #[derive(Debug, Serialize, Deserialize)]
 #[serde(tag = "e", content = "data")]

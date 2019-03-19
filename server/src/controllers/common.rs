@@ -1,5 +1,5 @@
 use crate::AppState;
-use actix_web::{HttpRequest, HttpResponse, fs::NamedFile};
+use actix_web::{HttpRequest, fs::NamedFile};
 use std::path::PathBuf;
 
 pub fn index_handler(req: HttpRequest<AppState>) -> actix_web::Result<NamedFile> {

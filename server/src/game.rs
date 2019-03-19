@@ -1,9 +1,10 @@
 use common::models::{BulletState, GameCommand, DeadPlayer, GameState, PlayerState, BULLET_SPEED, BULLET_RADIUS, PLAYER_RADIUS};
 use std::time::{Duration, SystemTime};
 
-const DEAD_PUNISH: Duration = Duration::from_secs(5);
+const DEAD_PUNISH: Duration = Duration::from_secs(3);
 
-const BOUNDS: (f32, f32) = (1024.0, 512.0);
+const BOUNDS: (f32, f32) = (1440.0, 960.0);
+const THROTTLE_PIXELS: f32 = 10.0;
 
 pub trait Triangle {
     fn x(&self) -> f32;
@@ -74,6 +75,10 @@ impl Game {
                     player.angle = angle;
                 }
                 GameCommand::Forward(throttle) => {
+                    // Bound and re-map throttle inputs.
+                    let throttle = throttle.max(0.0).min(1.0);
+                    let throttle = THROTTLE_PIXELS;
+
                     // Move the player
                     let (vel_x, vel_y) = angle_to_vector(player.angle);
 
