@@ -22,8 +22,8 @@ pub struct Analyzer {
     last_update: Instant,
 }
 
-impl Analyzer {
-    pub fn new() -> Self {
+impl Default for Analyzer {
+    fn default() -> Self {
         Self {
             own_player_id: 0,
             players: HashMap::new(),
@@ -31,7 +31,9 @@ impl Analyzer {
             last_update: Instant::now(),
         }
     }
+}
 
+impl Analyzer {
     pub fn push_state(&mut self, state: &GameState, time: Instant) {
         let mut players = HashMap::new();
         for player_state in state.players.iter() {
@@ -79,7 +81,7 @@ impl Analyzer {
     pub fn player_closest(&self) -> Option<&Player> {
         self.other_players()
             .iter()
-            .max_by_key(|player| (self.own_player().distance(**player) * 1e3) as u64)
+            .min_by_key(|player| (self.own_player().distance(**player) * 1e3) as u64)
             .map(|player| *player)
     }
 
@@ -110,6 +112,15 @@ impl Analyzer {
             .filter(|player| self.own_player().distance(**player) <= radius)
             .map(|player| *player)
             .collect::<Vec<_>>()
+    }
+
+    pub fn own_bullets_count(&self) -> usize {
+        self.bullets
+            .iter()
+            .filter(|bullet| {
+                bullet.player_id == self.own_player_id
+            })
+            .count()
     }
 
     pub fn bullets_colliding(&self, during: Duration) -> Vec<&Bullet> {

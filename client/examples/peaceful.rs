@@ -22,7 +22,7 @@ struct Player {
 impl Player {
     fn new() -> Self {
         Self {
-            analyzer: Analyzer::new(),
+            analyzer: Analyzer::default(),
             // Shoots at an enemy only if it's very close; otherwise keep dodging.
             strategy: Strategy::new(vec![
                 (
