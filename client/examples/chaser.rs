@@ -27,5 +27,5 @@ impl Handler for Player {
 
 fn main() {
     println!("starting up...");
-    tokyo::run("403B9A2F-103F-4E43-8B52-1AC4870AA1E3", Player::new()).unwrap();
+    tokyo::run("403B9A2F-103F-4E43-8B52-1AC4870AA1E3", "H4CK TH3 PL4N3T", Player::new()).unwrap();
 }

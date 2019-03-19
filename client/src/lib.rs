@@ -7,6 +7,10 @@ use std::{
 };
 use tokio_tungstenite as tokio_ws;
 use tokio_ws::tungstenite as ws;
+use url::{
+    percent_encoding::{utf8_percent_encode, DEFAULT_ENCODE_SET},
+    Url,
+};
 
 pub mod analyzer;
 pub mod geom;
@@ -83,11 +87,11 @@ where
 
 /// Begin the client-side game loop, using the provided struct that implements `Handler`
 /// to act on behalf of the player.
-pub fn run<H>(key: &str, handler: H) -> Result<(), Error>
+pub fn run<H>(key: &str, name: &str, handler: H) -> Result<(), Error>
 where
     H: Handler + Send + 'static,
 {
-    let url = url::Url::parse(&format!("ws://127.0.0.1:3000/socket?key={}", key))?;
+    let url = url::Url::parse(&format!("ws://127.0.0.1:3000/socket?key={}&name={}", key, utf8_percent_encode(name, DEFAULT_ENCODE_SET).to_string()))?;
 
     let client_state = Arc::new(Mutex::new(ClientState {
         id: 0,

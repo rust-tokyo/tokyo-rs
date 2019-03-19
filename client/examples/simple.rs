@@ -1,7 +1,6 @@
 use common::models::*;
 use tokyo::{self, Handler};
 use rand::{thread_rng, Rng};
-use rand::distributions::Alphanumeric;
 
 struct Player {
     id: Option<u32>,
@@ -40,5 +39,6 @@ impl Handler for Player {
 
 fn main() {
     println!("starting up...");
-    tokyo::run(&thread_rng().sample_iter(&Alphanumeric).take(10).collect::<String>(), Player::new()).unwrap();
+    let mut rng = thread_rng();
+    tokyo::run(&rng.gen::<u64>().to_string(), &format!("H4CK TH3 PL4N3T {}", rng.gen::<u8>()), Player::new()).unwrap();
 }
