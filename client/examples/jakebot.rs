@@ -45,7 +45,7 @@ impl Handler for Player {
             println!("TRYNA DODGE");
             self.state = if count > 0 { Some(State::Dodging(count - 1)) } else { None };
             Some(GameCommand::Forward(1.0))
-        } else if self.analyzer.bullets_colliding(Duration::from_millis(2000)).len() > 0 {
+        } else if self.analyzer.bullets_colliding(Duration::from_millis(2000)).count() > 0 {
             println!("OK TIME TO DODGE SOME BULLETS");
             self.state = Some(State::Dodging(5));
             Some(GameCommand::Rotate((me.angle + Angle::degrees(90.0)).get()))
