@@ -159,8 +159,8 @@ impl Game {
         for bullet in &mut self.state.bullets {
             let (vel_x, vel_y) = angle_to_vector(bullet.angle);
 
-            bullet.x += vel_x * BULLET_SPEED;
-            bullet.y += vel_y * BULLET_SPEED;
+            bullet.x += vel_x * BULLET_SPEED / TICKS_PER_SECOND;
+            bullet.y += vel_y * BULLET_SPEED / TICKS_PER_SECOND;
         }
 
         // Remove out-of-bound bullets
