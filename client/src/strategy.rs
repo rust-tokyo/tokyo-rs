@@ -294,8 +294,7 @@ impl Behavior for Dodge {
             return Some(next_command);
         }
 
-        let dodge_until = Instant::now() + Duration::from_secs(1);
-        if let Some(bullet) = analyzer.bullets_to_collide(dodge_until).iter().next() {
+        if let Some(bullet) = analyzer.colliding_bullets(Duration::from_secs(1)).iter().next() {
             let angle = bullet.velocity.tangent();
             self.next = Sequence::two(
                     Rotate::with_margin_degrees(angle, 30.0),

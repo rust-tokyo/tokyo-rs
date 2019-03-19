@@ -1,11 +1,20 @@
 use crate::geom::*;
-use common::models::{GameState, PlayerState, BulletState, BULLET_SPEED};
-use std::{collections::HashMap, time::{Instant, Duration}};
+use common::models::{
+    BulletState, GameState, PlayerState, BULLET_RADIUS, BULLET_SPEED, PLAYER_RADIUS,
+};
+use std::{
+    collections::HashMap,
+    time::{Duration, Instant},
+};
+
+// Collision detection etc is done at this compute interval.
+const ANALYSIS_INTERVAL: Duration = Duration::from_millis(33);
 
 pub struct Analyzer {
     own_player_id: u32,
     players: HashMap<u32, Player>,
     bullets: Vec<Bullet>,
+    last_update: Instant,
 }
 
 impl Analyzer {
@@ -14,6 +23,7 @@ impl Analyzer {
             own_player_id: 0,
             players: HashMap::new(),
             bullets: Vec::new(),
+            last_update: Instant::now(),
         }
     }
 
@@ -35,6 +45,8 @@ impl Analyzer {
             .iter()
             .map(|state| Bullet::new(&state))
             .collect();
+
+        self.last_update = time;
     }
 
     pub fn player<'a>(&'a self, id: u32) -> &'a Player {
@@ -55,9 +67,14 @@ impl Analyzer {
             .angle_to(&self.player(target).position)
     }
 
-    pub fn bullets_to_collide(&self, _until: Instant) -> Vec<Bullet> {
-        // TODO
-        unimplemented!();
+    pub fn colliding_bullets(&self, during: Duration) -> Vec<&Bullet> {
+        self.bullets
+            .iter()
+            .filter(|bullet| {
+                self.own_player()
+                    .is_colliding_during(bullet, during.clone())
+            })
+            .collect::<Vec<_>>()
     }
 }
 
@@ -67,7 +84,6 @@ pub struct Player {
     pub position: Point,
     pub trajectory: Trajectory,
     pub score_history: ScoreHistory,
-    last_update: Instant,
 }
 
 impl Player {
@@ -78,7 +94,6 @@ impl Player {
             position: Point::zero(),
             trajectory: Trajectory::new(),
             score_history: ScoreHistory::new(),
-            last_update: Instant::now(),
         }
     }
 
@@ -97,7 +112,6 @@ impl Player {
             position,
             trajectory,
             score_history,
-            last_update: time,
         }
     }
 
@@ -114,7 +128,17 @@ impl Player {
         self.trajectory.push(self.position.clone(), time);
         self.score_history
             .push(*scoreboard.get(&state.id).unwrap(), time);
-        self.last_update = time;
+    }
+
+    pub fn is_colliding_after(&self, bullet: &Bullet, after: Duration) -> bool {
+        self.position.distance(&bullet.project_position(after)) < BULLET_RADIUS + PLAYER_RADIUS
+    }
+
+    pub fn is_colliding_during(&self, bullet: &Bullet, during: Duration) -> bool {
+        let num_analysis = (during.as_millis() / ANALYSIS_INTERVAL.as_millis()) as u32;
+        (1..num_analysis + 1)
+            .map(|tick| self.is_colliding_after(bullet, ANALYSIS_INTERVAL * tick))
+            .any(|hit| hit)
     }
 }
 
@@ -217,5 +241,9 @@ impl Bullet {
             velocity: Vector::with_angle(state.angle) * BULLET_SPEED,
             player_id: state.player_id,
         }
+    }
+
+    pub fn project_position(&self, after: Duration) -> Point {
+        self.position.project(&self.velocity, after)
     }
 }
