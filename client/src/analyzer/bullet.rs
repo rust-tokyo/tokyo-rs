@@ -24,6 +24,12 @@ impl Bullet {
             player_id: state.player_id,
         }
     }
+
+    /// Creates a virtual `Bullet` with `position` and `angle`, useful for
+    /// collision simulation.
+    pub fn with_position_angle(position: Point, angle: Radian) -> Self {
+        Bullet { id: 0, position, velocity: Vector::with_angle(angle) * BULLET_SPEED, player_id: 0 }
+    }
 }
 
 /// `Bullet` struct provides some basic geometry operations through `PointExt`

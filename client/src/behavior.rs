@@ -1,5 +1,5 @@
 use crate::{
-    analyzer::{player::Player, Analyzer},
+    analyzer::{bullet::Bullet, player::Player, Analyzer},
     geom::*,
     models::{GameCommand, PLAYER_MAX_THROTTLE, PLAYER_MIN_THROTTLE},
 };
@@ -314,12 +314,24 @@ impl Behavior for FireAt {
         if self.times > 0 {
             if let Some(target) = self.target.get(analyzer) {
                 self.times -= 1;
-                // TODO: Easy win! This assumes the target is stationary, which
-                // is probably not the case. Improve the logic by taking the
-                // velocity of the target player into account.
-                let angle = analyzer.own_player().angle_to(target);
-                self.next =
-                    Sequence::with_slice(&[&Rotate::with_margin_degrees(angle, 5.0), &Fire::new()]);
+
+                let own_player = analyzer.own_player();
+                let angle = own_player.angle_to(target);
+                // Don't bother solving the math. Monte Carlo would do in this small world.
+                let corrected_angle = (-30..30)
+                    .map(|da| angle + Radian::degrees(da as f32))
+                    .filter(|angle| {
+                        target.is_colliding_during(
+                            &Bullet::with_position_angle(own_player.position, *angle),
+                            Duration::from_secs(5),
+                        )
+                    })
+                    .next()
+                    .unwrap_or(angle);
+                self.next = Sequence::with_slice(&[
+                    &Rotate::with_margin_degrees(corrected_angle, 5.0),
+                    &Fire::new(),
+                ]);
                 return self.next.next_command(analyzer);
             }
         }
