@@ -5,9 +5,9 @@ use std::{
 };
 
 pub const BULLET_RADIUS: f32 = 2.0;
-pub const BULLET_SPEED: f32 = 300.0; // in pixels-per-second
+pub const BULLET_SPEED: f32 = 600.0; // in pixels-per-second
 pub const PLAYER_RADIUS: f32 = 10.0;
-pub const PLAYER_BASE_SPEED: f32 = 150.0;
+pub const PLAYER_BASE_SPEED: f32 = 300.0;
 pub const PLAYER_MIN_THROTTLE: f32 = -1.0;
 pub const PLAYER_MAX_THROTTLE: f32 = 1.0;
 
