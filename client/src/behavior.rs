@@ -300,7 +300,9 @@ impl Behavior for FireAt {
         if self.times > 0 {
             if let Some(target) = self.target.get(analyzer) {
                 self.times -= 1;
-                // TODO: Improve with player throttle value.
+                // TODO: Easy win! This assumes the target is stationary, which
+                // is probably not the case. Improve the logic by taking the
+                // velocity of the target player into account.
                 let angle = analyzer.own_player().angle_to(target);
                 self.next =
                     Sequence::with_slice(&[&Rotate::with_margin_degrees(angle, 5.0), &Fire::new()]);
@@ -335,7 +337,9 @@ impl Behavior for Random {
         match rng.gen_range(0, 4) {
             0 => None,
             1 => Some(GameCommand::Rotate(rng.gen_range(0.0, 2.0 * std::f32::consts::PI))),
-            2 => Some(GameCommand::Throttle(rng.gen_range(PLAYER_MIN_THROTTLE, PLAYER_MAX_THROTTLE))),
+            2 => {
+                Some(GameCommand::Throttle(rng.gen_range(PLAYER_MIN_THROTTLE, PLAYER_MAX_THROTTLE)))
+            },
             3 => Some(GameCommand::Fire),
             _ => unreachable!(),
         }
