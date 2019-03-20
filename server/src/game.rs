@@ -14,10 +14,10 @@ const BOUNDS: (f32, f32) = (2880.0, 1920.0);
 const MAX_CONCURRENT_BULLETS: usize = 4;
 
 // Time until you start accruing points for surviving
-const SURVIVAL_TIMEOUT: u64 = 60;
+const SURVIVAL_TIMEOUT: u64 = 10;
 
 // Interval for accruing points after reaching the threshold
-const SURVIVAL_POINT_INTERVAL: u64 = 15;
+const SURVIVAL_POINT_INTERVAL: u64 = 4;
 
 pub trait Triangle {
     fn x(&self) -> f32;
