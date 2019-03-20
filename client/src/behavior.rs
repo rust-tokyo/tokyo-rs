@@ -1,7 +1,7 @@
 use crate::{
     analyzer::{player::Player, Analyzer},
     geom::*,
-    models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED},
+    models::{GameCommand, PLAYER_MAX_THROTTLE, PLAYER_MIN_THROTTLE},
 };
 use rand::{thread_rng, Rng};
 use std::{collections::VecDeque, fmt::Debug, time::Duration};
@@ -66,12 +66,12 @@ use std::{collections::VecDeque, fmt::Debug, time::Duration};
 ///             // perpendicular to the bullet velocity.
 ///             let dodge = Sequence::with_slice(&[
 ///                 &Rotate::with_margin_degrees(angle, 30.0),
-///                 &Forward::with_steps(1),
+///                 &Throttle::max(),
 ///             ]);
 ///
-///             // This Behavior works without persisting it somewhere for the next tick() as
-///             // in the previous example. At the next tick(), Rotate behavior will most likely
-///             // return None, proceeding immediately to the Forward behavior. If the situation
+///             // This Behavior works without persisting it across multiple tick()s as in the
+///             // previous example. At the next tick(), Rotate behavior will most likely return
+///             // None, proceeding immediately to the Throttle behavior. If the situation
 ///             // changes e.g. the bullet hit someone else, or there are other bullets
 ///             // colliding, then it may take the Rotate behavior again, but it's likely an
 ///             // optimal adjustment (assuming your logic of selecting a bullet to dodge is
@@ -180,7 +180,7 @@ impl Throttle {
     }
 
     pub fn max() -> Self {
-        Self { value: PLAYER_MAX_SPEED }
+        Self { value: PLAYER_MAX_THROTTLE }
     }
 }
 
@@ -335,7 +335,7 @@ impl Behavior for Random {
         match rng.gen_range(0, 4) {
             0 => None,
             1 => Some(GameCommand::Rotate(rng.gen_range(0.0, 2.0 * std::f32::consts::PI))),
-            2 => Some(GameCommand::Throttle(rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED))),
+            2 => Some(GameCommand::Throttle(rng.gen_range(PLAYER_MIN_THROTTLE, PLAYER_MAX_THROTTLE))),
             3 => Some(GameCommand::Fire),
             _ => unreachable!(),
         }

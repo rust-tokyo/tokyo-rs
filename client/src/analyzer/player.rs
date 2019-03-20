@@ -1,7 +1,7 @@
 use crate::{
     analyzer::{bullet::Bullet, ANALYSIS_INTERVAL},
     geom::*,
-    models::{PlayerState, BULLET_RADIUS, PLAYER_BASE_SPEED, PLAYER_MIN_SPEED, PLAYER_RADIUS},
+    models::{PlayerState, BULLET_RADIUS, PLAYER_BASE_SPEED, PLAYER_MIN_THROTTLE, PLAYER_RADIUS},
 };
 use std::{
     collections::HashMap,
@@ -89,7 +89,7 @@ impl Default for Player {
         Self {
             id: 0,
             angle: Radian::zero(),
-            throttle: PLAYER_MIN_SPEED,
+            throttle: PLAYER_MIN_THROTTLE,
             position: Point::zero(),
             velocity: Vector::zero(),
             trajectory: Trajectory::default(),
