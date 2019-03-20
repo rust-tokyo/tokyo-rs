@@ -21,7 +21,6 @@ use std::collections::HashSet;
 
 #[derive(Deserialize, Debug)]
 pub struct AppConfig {
-    secret: String,
     server_port: Option<u16>,
     api_keys: HashSet<String>,
     dev_mode: bool,
