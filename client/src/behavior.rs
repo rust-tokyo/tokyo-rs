@@ -100,7 +100,7 @@ impl Clone for Box<Behavior> {
 
 impl Default for Box<Behavior> {
     fn default() -> Self {
-        Box::new(Noop {})
+        Box::new(Skip {})
     }
 }
 
@@ -135,6 +135,20 @@ impl Sequence {
 
     pub fn with_slice(behaviors: &[&Behavior]) -> Self {
         Self { inner: behaviors.into_iter().map(|b| b.box_clone()).collect::<VecDeque<_>>() }
+    }
+}
+
+/// A `Behavior` that always evaluates to `None`.
+#[derive(Clone, Debug)]
+pub struct Skip;
+
+impl Behavior for Skip {
+    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
+        None
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
     }
 }
 
