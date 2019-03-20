@@ -8,7 +8,6 @@ const DEAD_PUNISH: Duration = Duration::from_secs(3);
 
 pub const TICKS_PER_SECOND: f32 = 30.0;
 const BOUNDS: (f32, f32) = (1440.0, 960.0);
-const THROTTLE_PIXELS: f32 = 10.0;
 const MAX_CONCURRENT_BULLETS: usize = 4;
 
 pub trait Triangle {
