@@ -95,7 +95,7 @@ impl Game {
                 GameCommand::Rotate(angle) => {
                     player.angle = angle;
                 },
-                GameCommand::Forward(throttle) => {
+                GameCommand::Throttle(throttle) => {
                     // Bound and re-map throttle inputs.
                     let throttle = throttle.max(0.0).min(1.0);
 

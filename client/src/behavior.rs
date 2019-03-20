@@ -152,7 +152,7 @@ impl Behavior for Noop {
     }
 }
 
-/// A `Behavior` to keep yielding `GameCommand::Forward` commands until it
+/// A `Behavior` to keep yielding `GameCommand::Throttle` commands until it
 /// travels the `distance`.
 #[derive(Clone, Debug)]
 pub struct Forward {
@@ -164,7 +164,7 @@ impl Behavior for Forward {
         if self.distance > 0.0 {
             let next_move = PLAYER_MAX_SPEED.max(self.distance);
             self.distance -= next_move;
-            Some(GameCommand::Forward(next_move))
+            Some(GameCommand::Throttle(next_move))
         } else {
             None
         }
@@ -292,7 +292,7 @@ impl Behavior for Random {
         match rng.gen_range(0, 4) {
             0 => None,
             1 => Some(GameCommand::Rotate(rng.gen_range(0.0, 2.0 * std::f32::consts::PI))),
-            2 => Some(GameCommand::Forward(rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED))),
+            2 => Some(GameCommand::Throttle(rng.gen_range(PLAYER_MIN_SPEED, PLAYER_MAX_SPEED))),
             3 => Some(GameCommand::Fire),
             _ => unreachable!(),
         }
