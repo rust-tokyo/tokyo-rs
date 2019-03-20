@@ -1,7 +1,7 @@
 use crate::{
     analyzer::{bullet::Bullet, ANALYSIS_INTERVAL},
     geom::*,
-    models::{PlayerState, BULLET_RADIUS, PLAYER_RADIUS},
+    models::{PlayerState, BULLET_RADIUS, PLAYER_BASE_SPEED, PLAYER_MIN_SPEED, PLAYER_RADIUS},
 };
 use std::{
     collections::HashMap,
@@ -15,7 +15,9 @@ use std::{
 pub struct Player {
     pub id: u32,
     pub angle: Radian,
+    pub throttle: f32,
     pub position: Point,
+    pub velocity: Vector,
     pub trajectory: Trajectory,
     pub score_history: ScoreHistory,
 }
@@ -23,7 +25,9 @@ pub struct Player {
 impl Player {
     /// Creates a new `Player` based on the given `state`.
     pub fn with_state(state: &PlayerState, scoreboard: &HashMap<u32, u32>, time: Instant) -> Self {
+        let angle = Radian::new(state.angle);
         let position = Point::new(state.x, state.y);
+        let velocity = Vector::with_angle(angle) * state.throttle * PLAYER_BASE_SPEED;
 
         let mut trajectory = Trajectory::default();
         trajectory.push(position.clone(), time);
@@ -31,7 +35,15 @@ impl Player {
         let mut score_history = ScoreHistory::default();
         score_history.push(*scoreboard.get(&state.id).unwrap_or(&0), time);
 
-        Self { id: state.id, angle: Radian::new(state.angle), position, trajectory, score_history }
+        Self {
+            id: state.id,
+            angle,
+            throttle: state.throttle,
+            position,
+            velocity,
+            trajectory,
+            score_history,
+        }
     }
 
     /// Updates the `Player` with a new `state`.
@@ -44,7 +56,9 @@ impl Player {
         assert_eq!(self.id, state.id);
 
         self.angle = Radian::new(state.angle);
+        self.throttle = state.throttle;
         self.position = Point::new(state.x, state.y);
+        self.velocity = Vector::with_angle(self.angle) * state.throttle * PLAYER_BASE_SPEED;
         self.trajectory.push(self.position.clone(), time);
         self.score_history.push(*scoreboard.get(&state.id).unwrap_or(&0), time);
     }
@@ -57,7 +71,7 @@ impl Player {
     /// Returns whether the `Player` will be colliding the given `Bullet` at a
     /// particular time in the future, specified by `interval`.
     pub fn is_colliding_at(&self, bullet: &Bullet, interval: Duration) -> bool {
-        self.position.distance(&bullet.project_position(interval)) < BULLET_RADIUS + PLAYER_RADIUS
+        self.project(interval).distance(&bullet.project(interval)) < BULLET_RADIUS + PLAYER_RADIUS
     }
 
     /// Returns whether the `Player` will be colliding the given `Bullet` during
@@ -75,7 +89,9 @@ impl Default for Player {
         Self {
             id: 0,
             angle: Radian::zero(),
+            throttle: PLAYER_MIN_SPEED,
             position: Point::zero(),
+            velocity: Vector::zero(),
             trajectory: Trajectory::default(),
             score_history: ScoreHistory::default(),
         }
@@ -89,6 +105,16 @@ impl PointExt for Player {
         &self.position
     }
 }
+
+/// `Player` struct provides some basic geometry operations through `VectorExt`
+/// trait. See the `geom` mod.
+impl VectorExt for Player {
+    fn vector(&self) -> &Vector {
+        &self.velocity
+    }
+}
+
+impl Moving for Player {}
 
 /// `Trajectory` contains the past positions of a `Player`. You may want to use
 /// it to infer the move behavior and logic of a `Player` of your interest.

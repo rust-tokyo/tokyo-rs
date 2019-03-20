@@ -58,7 +58,7 @@ pub trait PointExt {
 
     /// Returns the projection of this position along the given `velocity`
     /// (pixels-per-second) for the amount of time `dt`.
-    fn project(&self, velocity: &Vector, dt: Duration) -> Point {
+    fn project_with_velocity(&self, velocity: &Vector, dt: Duration) -> Point {
         *self.point() + *velocity * dt.as_secs_f32()
     }
 }
@@ -111,5 +111,13 @@ pub trait RadianExt {
 impl RadianExt for Radian {
     fn radian(&self) -> &Radian {
         self
+    }
+}
+
+pub trait Moving: PointExt + VectorExt {
+    /// Returns the projection of the current position, or `point()`, along the
+    /// velocity, or `vector()`, for the amount of time `dt`.
+    fn project(&self, dt: Duration) -> Point {
+        self.point().project_with_velocity(self.vector(), dt)
     }
 }

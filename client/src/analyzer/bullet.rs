@@ -2,7 +2,6 @@ use crate::{
     geom::*,
     models::{BulletState, BULLET_SPEED},
 };
-use std::time::Duration;
 
 /// `Bullet` struct contains the past and the current states of a single bullet
 /// identified by an ID. You will usually be accessing `Bullet`s through the
@@ -25,12 +24,6 @@ impl Bullet {
             player_id: state.player_id,
         }
     }
-
-    /// Returns the projected position of the `Bullet` at a specific time in the
-    /// future specified by `after`.
-    pub fn project_position(&self, after: Duration) -> Point {
-        self.position.project(&self.velocity, after)
-    }
 }
 
 /// `Bullet` struct provides some basic geometry operations through `PointExt`
@@ -48,3 +41,5 @@ impl VectorExt for Bullet {
         &self.velocity
     }
 }
+
+impl Moving for Bullet {}

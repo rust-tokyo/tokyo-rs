@@ -138,13 +138,14 @@ impl Sequence {
     }
 }
 
-/// A `Behavior` to do nothing.
+/// A `Behavior` that have no effect but still consumes an action.
 #[derive(Clone, Debug)]
 pub struct Noop;
 
 impl Behavior for Noop {
-    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
-        None
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
+        // Rotate to the current angle; thus no effect.
+        Some(GameCommand::Rotate(analyzer.own_player().angle.positive().get()))
     }
 
     fn box_clone(&self) -> Box<Behavior> {
@@ -152,19 +153,17 @@ impl Behavior for Noop {
     }
 }
 
-/// A `Behavior` to keep yielding `GameCommand::Throttle` commands until it
-/// travels the `distance`.
+/// A `Behavior` to set the current throttle value, unless it's within an error
+/// margin (hard-coded as 0.05 now).
 #[derive(Clone, Debug)]
-pub struct Forward {
-    pub distance: f32,
+pub struct Throttle {
+    pub value: f32,
 }
 
-impl Behavior for Forward {
-    fn next_command(&mut self, _: &Analyzer) -> Option<GameCommand> {
-        if self.distance > 0.0 {
-            let next_move = PLAYER_MAX_SPEED.max(self.distance);
-            self.distance -= next_move;
-            Some(GameCommand::Throttle(next_move))
+impl Behavior for Throttle {
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
+        if (analyzer.own_player().throttle - self.value).abs() > 0.05 {
+            Some(GameCommand::Throttle(self.value))
         } else {
             None
         }
@@ -175,11 +174,48 @@ impl Behavior for Forward {
     }
 }
 
-impl Forward {
-    /// Creates a new `Forward` to move `steps`. Each step is the maximum
-    /// distance one can travel by a tick.
-    pub fn with_steps(steps: u32) -> Self {
-        Self { distance: PLAYER_MAX_SPEED * steps as f32 }
+impl Throttle {
+    pub fn stop() -> Self {
+        Self { value: 0.0 }
+    }
+
+    pub fn max() -> Self {
+        Self { value: PLAYER_MAX_SPEED }
+    }
+}
+
+/// A `Behavior` to move to the `destination`.
+#[derive(Clone, Debug)]
+pub struct MoveTo {
+    pub destination: Point,
+    /// Whether to stop at the end of the behavior.
+    pub end_with_brake: bool,
+}
+
+impl Behavior for MoveTo {
+    fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
+        let own_player = analyzer.own_player();
+        if own_player.distance(&self.destination) < 10.0 {
+            if self.end_with_brake {
+                self.end_with_brake = false;
+                return Some(GameCommand::Throttle(0.0));
+            } else {
+                return None;
+            }
+        }
+
+        // TODO: Don't block with Noop.
+        let angle = own_player.angle_to(&self.destination);
+        Sequence::with_slice(&[
+            &Rotate::with_margin_degrees(angle, 5.0),
+            &Throttle::max(),
+            &Noop {},
+        ])
+        .next_command(analyzer)
+    }
+
+    fn box_clone(&self) -> Box<Behavior> {
+        Box::new(self.clone())
     }
 }
 
@@ -264,6 +300,7 @@ impl Behavior for FireAt {
         if self.times > 0 {
             if let Some(target) = self.target.get(analyzer) {
                 self.times -= 1;
+                // TODO: Improve with player throttle value.
                 let angle = analyzer.own_player().angle_to(target);
                 self.next =
                     Sequence::with_slice(&[&Rotate::with_margin_degrees(angle, 5.0), &Fire::new()]);
@@ -323,9 +360,11 @@ impl Behavior for Chase {
             let distance_to_target = analyzer.own_player().distance(target);
             if distance_to_target > self.distance {
                 let angle = analyzer.own_player().angle_to(target);
+                // TODO: Don't block with Noop.
                 return Sequence::with_slice(&[
                     &Rotate::with_margin_degrees(angle, 10.0),
-                    &Forward::with_steps(1),
+                    &Throttle::max(),
+                    &Noop {},
                 ])
                 .next_command(analyzer);
             }
@@ -338,20 +377,17 @@ impl Behavior for Chase {
     }
 }
 
-/// A `Behavior` to keep dodging nearby bullets as much as possible. Note that
-/// the current implementation has a lot of room for improvements.
+/// A `Behavior` to keep dodging nearby bullets as much as possible at the
+/// maximum throttle.
 #[derive(Clone, Debug)]
 pub struct Dodge;
 
 impl Behavior for Dodge {
     fn next_command(&mut self, analyzer: &Analyzer) -> Option<GameCommand> {
-        if let Some(bullet) = analyzer.bullets_colliding(Duration::from_secs(3)).next() {
+        if let Some(bullet) = analyzer.bullets_colliding(Duration::from_secs(1)).next() {
             let angle = bullet.velocity.tangent();
-            Sequence::with_slice(&[
-                &Rotate::with_margin_degrees(angle, 30.0),
-                &Forward::with_steps(1),
-            ])
-            .next_command(analyzer)
+            Sequence::with_slice(&[&Rotate::with_margin_degrees(angle, 30.0), &Throttle::max()])
+                .next_command(analyzer)
         } else {
             None
         }
