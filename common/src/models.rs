@@ -7,6 +7,7 @@ use std::{
 pub const BULLET_RADIUS: f32 = 2.0;
 pub const BULLET_SPEED: f32 = 300.0; // in pixels-per-second
 pub const PLAYER_RADIUS: f32 = 10.0;
+pub const PLAYER_BASE_SPEED: f32 = 150.0;
 pub const PLAYER_MIN_SPEED: f32 = -1.0;
 pub const PLAYER_MAX_SPEED: f32 = 1.0;
 
@@ -19,8 +20,8 @@ pub enum GameCommand {
     #[serde(rename = "rotate")]
     Rotate(f32), // In radians, no punish.
 
-    #[serde(rename = "forward")]
-    Forward(f32), // Between -1.0 and 1.0, otherwise consequences.
+    #[serde(rename = "throttle")]
+    Throttle(f32), // Between 0.0 and 1.0, otherwise consequences.
 
     #[serde(rename = "fire")]
     Fire, // Fire at the current angle.
@@ -43,17 +44,19 @@ pub enum ServerToClient {
 pub struct PlayerState {
     pub id: u32,
     pub angle: f32,
+    pub throttle: f32,
     pub x: f32,
     pub y: f32,
 }
 
 impl PlayerState {
     pub fn new(id: u32) -> Self {
-        Self { id, angle: 0f32, x: 0f32, y: 0f32 }
+        Self { id, angle: 0f32, throttle: 0f32, x: 0f32, y: 0f32 }
     }
 
     pub fn randomize(&mut self, rng: &mut impl rand::Rng, (bound_right, bound_bottom): (f32, f32)) {
         self.angle = rng.gen_range(0.0, std::f32::consts::PI * 2.0);
+        self.throttle = 0.0;
         self.x = rng.gen_range(0.0, bound_right);
         self.y = rng.gen_range(0.0, bound_bottom);
     }

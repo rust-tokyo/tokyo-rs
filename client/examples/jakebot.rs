@@ -27,7 +27,7 @@ impl Player {
                 if (me.angle - angle).abs() > Angle::degrees(1.0) {
                     Some(GameCommand::Rotate(angle.get()))
                 } else {
-                    Some(GameCommand::Forward(1.0))
+                    Some(GameCommand::Throttle(1.0))
                 }
             }
         } else {
@@ -44,7 +44,7 @@ impl Handler for Player {
         if let Some(State::Dodging(count)) = self.state {
             println!("TRYNA DODGE");
             self.state = if count > 0 { Some(State::Dodging(count - 1)) } else { None };
-            Some(GameCommand::Forward(1.0))
+            Some(GameCommand::Throttle(1.0))
         } else if self.analyzer.bullets_colliding(Duration::from_millis(2000)).count() > 0 {
             println!("OK TIME TO DODGE SOME BULLETS");
             self.state = Some(State::Dodging(5));
