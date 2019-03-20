@@ -190,6 +190,7 @@ impl Game {
         }
 
         for player in self.state.players.drain_filter(|player| dead_players.contains(&player.id)) {
+            player.randomize(&mut self.rng, BOUNDS);
             self.state
                 .dead
                 .push(DeadPlayer { respawn: SystemTime::now() + DEAD_PUNISH, player });
