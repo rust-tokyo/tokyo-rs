@@ -1,10 +1,11 @@
+//! Unless you want to go extreme, you will not need to understand what are
+//! inside this file except the `Handler` trait. Any modifications you make in
+//! this file may result in some undefined behaviors or consequences. Do it as
+//! your own risk :)
+
 #[macro_use]
 extern crate serde_derive;
 
-/// Unless you want to go extreme, you will not need to understand what are
-/// inside this file except the `Handler` trait. Any modifications you make in
-/// this file may result in some undefined behaviors or consequences. Do it as
-/// your own risk :)
 pub mod analyzer;
 pub mod behavior;
 pub mod geom;

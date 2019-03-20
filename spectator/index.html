@@ -17,7 +17,7 @@
                 margin: 0;
                 padding: 0;
                 border: 0;
-                font-size: 100%;
+                font-size: 120%;
                 font: inherit;
                 vertical-align: baseline;
                 overflow:hidden;
@@ -140,7 +140,7 @@
                     // draw team name
                     ctx.rotate(-this.angle + Math.PI / 2.0); // please don't ask me about this math
                     const oldFill = ctx.fillStyle;
-                    ctx.font = '9px monospace';
+                    ctx.font = '12px monospace';
                     ctx.textAlign = 'left';
                     ctx.textBaseline = 'top';
                     let textMeasurements = ctx.measureText(team_names[this.id]);
