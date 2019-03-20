@@ -183,6 +183,8 @@ impl Forward {
     }
 }
 
+/// A `Behavior` to rotate to the specified `angle`. It yield `None` if the
+/// current angle is within the error `margin`.
 #[derive(Clone, Debug)]
 pub struct Rotate {
     angle: Radian,
@@ -213,6 +215,7 @@ impl Rotate {
     }
 }
 
+/// A `Behavior` to fire the specified number of `times`.j
 #[derive(Clone, Debug)]
 pub struct Fire {
     times: u32,
@@ -243,6 +246,8 @@ impl Fire {
     }
 }
 
+/// A `Behavior` to rotate to the `target` and fire the specified number of
+/// `times`.
 #[derive(Clone, Debug)]
 pub struct FireAt {
     target: Target,
@@ -283,6 +288,7 @@ impl FireAt {
     }
 }
 
+/// A `Behavior` to send a random command.
 #[derive(Clone, Debug)]
 struct Random;
 
@@ -303,6 +309,8 @@ impl Behavior for Random {
     }
 }
 
+/// A `Behavior` to keep moving towards the specified `target` until it reaches
+/// within the `distance`.
 #[derive(Clone, Debug)]
 pub struct Chase {
     pub target: Target,
@@ -330,6 +338,8 @@ impl Behavior for Chase {
     }
 }
 
+/// A `Behavior` to keep dodging nearby bullets as much as possible. Note that
+/// the current implementation has a lot of room for improvements.
 #[derive(Clone, Debug)]
 pub struct Dodge;
 
@@ -352,25 +362,30 @@ impl Behavior for Dodge {
     }
 }
 
-/// Target player.
+/// `Target enum` is used to specify a `Player` based on some predefined
+/// conditions. Some `Behavior`s like `FireAt` works with `Target` to dynamically
+/// compute the target `Player`.
 #[derive(Clone, Debug)]
 pub enum Target {
+    /// Player specified by an ID.
     Id(u32),
 
-    /// Player closest to yourself.
+    /// Player currently closest to you.
     Closest,
 
-    /// Player that is least moving.
+    /// Player that is least moving in the past.b
     LeastMoving,
 
-    /// Player with the height score earned.
+    /// Player with the highest score so far.
     HighestScore,
 
-    /// Player with the height projected score after the specified duration.
+    /// Player with the highest predicted score at a certain time in the future.
     HighestScoreAfter(Duration),
 }
 
 impl Target {
+    /// Returns a reference to a `Player` based on the condition. `None` if no
+    /// players match the condition.
     pub fn get<'a>(&self, analyzer: &'a Analyzer) -> Option<&'a Player> {
         match self {
             Target::Id(id) => analyzer.player(*id),

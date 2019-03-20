@@ -9,3 +9,4 @@ edition = "2018"
 
 [dependencies]
 tokyo = { path = "../../../client" }
+rand = "0.6"

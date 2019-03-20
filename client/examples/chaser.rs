@@ -1,3 +1,11 @@
+/// An example client that uses the `Analyzer` and `Behavior` structs provided by
+/// the client library (aka `tokyo crate`.) `Analyzer` should provide a good
+/// basis for modeling the past, current and predicted state of the world, and
+/// hopefully is easy enough to get started with. `Behavior` traits and some of
+/// the predefined behavior structs involve some more levels of abstraction,
+/// which you may or may not like. Please see the documentation in the `behavior`
+/// mod for more details.
+use rand::{thread_rng, Rng};
 use std::time::Instant;
 use tokyo::{
     self,
@@ -33,6 +41,8 @@ impl Handler for Player {
         if let Some(command) = self.current_behavior.next_command(&self.analyzer) {
             Some(command)
         } else {
+            // chase() returns a stateful Behavior, which we want to persist
+            // across ticks.
             self.current_behavior = chase();
             self.current_behavior.next_command(&self.analyzer)
         }
@@ -40,6 +50,12 @@ impl Handler for Player {
 }
 
 fn main() {
+    let mut rng = thread_rng();
+
+    // TODO: Substitute with your API key and team name.
+    let api_key = &rng.gen::<u64>().to_string();
+    let team_name = &format!("CHASER {}", rng.gen::<u8>());
+
     println!("starting up...");
-    tokyo::run("403B9A2F-103F-4E43-8B52-1AC4870AA1E3", "CHASER", Player::default()).unwrap();
+    tokyo::run(api_key, team_name, Player::default()).unwrap();
 }

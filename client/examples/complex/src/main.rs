@@ -1,9 +1,14 @@
 #![allow(dead_code)]
 
+/// WIP: The implementation is half way, and the behavior has not been verified.
+///
+/// A more complex example client, that uses a decision tree structure to decide
+/// the next behavior at each tick.
 use crate::{
     condition::{Always, PlayerWithin},
     strategy::{PrioritizedBehavior, Strategy, StrategyNode},
 };
+use rand::{thread_rng, Rng};
 use std::time::Instant;
 use tokyo::{
     self,
@@ -27,7 +32,9 @@ impl Player {
     fn new() -> Self {
         Self {
             analyzer: Analyzer::default(),
-            // Shoots at an enemy only if it's very close; otherwise keep dodging.
+            // TODO: Replace with a deeper decision tree. The current, simple
+            // logic shoots at an enemy only if it's very close; otherwise it
+            // keeps dodging.
             strategy: Strategy::new(vec![
                 (
                     Box::new(PlayerWithin { radius: 100.0 }),
@@ -61,6 +68,12 @@ impl Handler for Player {
 }
 
 fn main() {
+    let mut rng = thread_rng();
+
+    // TODO: Substitute with your API key and team name.
+    let api_key = &rng.gen::<u64>().to_string();
+    let team_name = &format!("PEACEFUL {}", rng.gen::<u8>());
+
     println!("starting up...");
-    tokyo::run("403B9A2F-103F-4E43-8B52-1AC4870AA1E3", "PEACEFUL", Player::new()).unwrap();
+    tokyo::run(api_key, team_name, Player::new()).unwrap();
 }
