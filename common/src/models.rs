@@ -7,6 +7,7 @@ use std::{
 pub const BULLET_RADIUS: f32 = 2.0;
 pub const BULLET_SPEED: f32 = 300.0; // in pixels-per-second
 pub const PLAYER_RADIUS: f32 = 10.0;
+pub const PLAYER_BASE_SPEED: f32 = 20.0;
 pub const PLAYER_MIN_SPEED: f32 = -1.0;
 pub const PLAYER_MAX_SPEED: f32 = 1.0;
 
@@ -43,13 +44,14 @@ pub enum ServerToClient {
 pub struct PlayerState {
     pub id: u32,
     pub angle: f32,
+    pub throttle: f32,
     pub x: f32,
     pub y: f32,
 }
 
 impl PlayerState {
     pub fn new(id: u32) -> Self {
-        Self { id, angle: 0f32, x: 0f32, y: 0f32 }
+        Self { id, angle: 0f32, throttle: 0f32, x: 0f32, y: 0f32 }
     }
 
     pub fn randomize(&mut self, rng: &mut impl rand::Rng, (bound_right, bound_bottom): (f32, f32)) {

@@ -1,6 +1,6 @@
 use common::models::{
     BulletState, DeadPlayer, GameCommand, GameState, PlayerState, BULLET_RADIUS, BULLET_SPEED,
-    PLAYER_RADIUS,
+    PLAYER_BASE_SPEED, PLAYER_RADIUS,
 };
 use std::time::{Duration, SystemTime};
 
@@ -98,17 +98,8 @@ impl Game {
                 GameCommand::Forward(throttle) => {
                     // Bound and re-map throttle inputs.
                     let throttle = throttle.max(0.0).min(1.0);
-                    let throttle = throttle * THROTTLE_PIXELS;
 
-                    // Move the player
-                    let (vel_x, vel_y) = angle_to_vector(player.angle);
-
-                    player.x += vel_x * throttle;
-                    player.y += vel_y * throttle;
-
-                    // Keep the players in bounds
-                    player.x = player.x.max(PLAYER_RADIUS).min(BOUNDS.0 - PLAYER_RADIUS);
-                    player.y = player.y.max(PLAYER_RADIUS).min(BOUNDS.1 - PLAYER_RADIUS);
+                    player.throttle = throttle;
                 },
                 GameCommand::Fire => {
                     let active_bullets = self
@@ -140,7 +131,7 @@ impl Game {
 
     pub fn init(&mut self) {}
 
-    pub fn tick(&mut self, _dt: f32) {
+    pub fn tick(&mut self, dt: f32) {
         // Revive the dead
         let now = SystemTime::now();
         let revived = self
@@ -159,8 +150,20 @@ impl Game {
         for bullet in &mut self.state.bullets {
             let (vel_x, vel_y) = angle_to_vector(bullet.angle);
 
-            bullet.x += vel_x * BULLET_SPEED / TICKS_PER_SECOND;
-            bullet.y += vel_y * BULLET_SPEED / TICKS_PER_SECOND;
+            bullet.x += vel_x * BULLET_SPEED * dt;
+            bullet.y += vel_y * BULLET_SPEED * dt;
+        }
+
+        for player in &mut self.state.players {
+            // Move the player
+            let (vel_x, vel_y) = angle_to_vector(player.angle);
+
+            player.x += vel_x * PLAYER_BASE_SPEED * player.throttle * dt;
+            player.y += vel_y * PLAYER_BASE_SPEED * player.throttle * dt;
+
+            // Keep the players in bounds
+            player.x = player.x.max(PLAYER_RADIUS).min(BOUNDS.0 - PLAYER_RADIUS);
+            player.y = player.y.max(PLAYER_RADIUS).min(BOUNDS.1 - PLAYER_RADIUS);
         }
 
         // Remove out-of-bound bullets
