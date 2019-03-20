@@ -5,8 +5,8 @@ use crate::{
 };
 use actix::{Actor, ActorContext, Addr, AsyncContext, Handler, StreamHandler};
 use actix_web::ws::{self, CloseCode, CloseReason};
-use common::models::ServerToClient;
 use ratelimit_meter::{DirectRateLimiter, GCRA};
+use tokyo::models::ServerToClient;
 
 const ACTIONS_PER_SECOND: u32 = 20;
 

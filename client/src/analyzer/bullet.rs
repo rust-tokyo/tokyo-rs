@@ -1,5 +1,7 @@
-use crate::geom::*;
-use common::models::{BulletState, BULLET_SPEED};
+use crate::{
+    geom::*,
+    models::{BulletState, BULLET_SPEED},
+};
 use std::time::Duration;
 
 /// `Bullet` struct contains the past and the current states of a single bullet

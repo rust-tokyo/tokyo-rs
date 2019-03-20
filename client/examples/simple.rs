@@ -1,6 +1,5 @@
-use common::models::*;
 use rand::{thread_rng, Rng};
-use tokyo::{self, Handler};
+use tokyo::{self, models::*, Handler};
 
 struct Player {
     id: Option<u32>,

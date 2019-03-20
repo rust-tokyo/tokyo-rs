@@ -1,8 +1,8 @@
 use crate::{
     analyzer::{bullet::Bullet, ANALYSIS_INTERVAL},
     geom::*,
+    models::{PlayerState, BULLET_RADIUS, PLAYER_RADIUS},
 };
-use common::models::{PlayerState, BULLET_RADIUS, PLAYER_RADIUS};
 use std::{
     collections::HashMap,
     time::{Duration, Instant},

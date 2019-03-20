@@ -1,8 +1,8 @@
 use crate::{
     analyzer::{bullet::Bullet, player::Player},
     geom::*,
+    models::ClientState,
 };
-use common::models::ClientState;
 use std::{
     collections::HashMap,
     time::{Duration, Instant},
@@ -124,8 +124,7 @@ impl Analyzer {
     /// Returns an `Iterator` of `Player`s whose current location is within
     /// the `radius` of your own `Player`.
     pub fn players_within<'a>(&'a self, radius: f32) -> impl Iterator<Item = &'a Player> {
-        self.other_players()
-            .filter(move |player| self.own_player().distance(*player) <= radius)
+        self.other_players().filter(move |player| self.own_player().distance(*player) <= radius)
     }
 
     /// Returns an `Iterator` of `Bullet`s that are shot by you and are still
@@ -142,19 +141,14 @@ impl Analyzer {
 
     /// Returns an `Iterator` of `Bullet`s that your `Player` would be colliding
     /// within the `duration`, if you stayed at the current position.
-    pub fn bullets_colliding<'a>(
-        &'a self,
-        during: Duration,
-    ) -> impl Iterator<Item = &'a Bullet> {
-        self.other_bullets().filter(move |bullet| {
-            self.own_player().is_colliding_during(bullet, during.clone())
-        })
+    pub fn bullets_colliding<'a>(&'a self, during: Duration) -> impl Iterator<Item = &'a Bullet> {
+        self.other_bullets()
+            .filter(move |bullet| self.own_player().is_colliding_during(bullet, during.clone()))
     }
 
     /// Returns an `Iterator` of `Bullet`s that are shot by other `Player`s and
     /// are within the `radius` of your current position.
     pub fn bullets_within<'a>(&'a self, radius: f32) -> impl Iterator<Item = &'a Bullet> {
-        self.other_bullets()
-            .filter(move |bullet| self.own_player().distance(*bullet) <= radius)
+        self.other_bullets().filter(move |bullet| self.own_player().distance(*bullet) <= radius)
     }
 }

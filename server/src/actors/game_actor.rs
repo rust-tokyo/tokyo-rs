@@ -4,13 +4,13 @@ use crate::{
     models::messages::{ClientStop, PlayerGameCommand},
 };
 use actix::{Actor, Addr, AsyncContext, Context, Handler, Message};
-use common::models::*;
 use futures::sync::oneshot;
 use spin_sleep::LoopHelper;
 use std::{
     collections::{HashMap, HashSet},
     sync::mpsc::{channel, Receiver, Sender},
 };
+use tokyo::models::*;
 
 #[derive(Debug)]
 pub struct GameActor {
