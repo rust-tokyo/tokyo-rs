@@ -85,6 +85,10 @@ impl Game {
 
     pub fn player_left(&mut self, player_id: u32) {
         info!("Player {} left!", player_id);
+
+        if let Some(player) = self.state.players.iter_mut().find(|p| p.id == player_id) {
+            player.throttle = 0.0;
+        }
     }
 
     pub fn handle_cmd(&mut self, player_id: u32, cmd: GameCommand) {
