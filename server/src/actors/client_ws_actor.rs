@@ -8,7 +8,7 @@ use actix_web::ws::{self, CloseCode, CloseReason};
 use ratelimit_meter::{DirectRateLimiter, GCRA};
 use tokyo::models::ServerToClient;
 
-const ACTIONS_PER_SECOND: u32 = 20;
+const ACTIONS_PER_SECOND: u32 = 22;
 
 #[derive(Debug)]
 pub struct ClientWsActor {
