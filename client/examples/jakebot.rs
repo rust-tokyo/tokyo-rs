@@ -73,5 +73,5 @@ impl Handler for Player {
 
 fn main() {
     println!("starting up...");
-    tokyo::run("jakebot", "jakebot", Player::default()).unwrap();
+    tokyo::run("DeadgDv3GrV7uNUX", "jakebot", Player::default()).unwrap();
 }
