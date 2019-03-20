@@ -11,9 +11,25 @@ use std::{
 pub mod bullet;
 pub mod player;
 
-// Collision detection etc is done at this compute interval.
+/// Collision detection etc is done at this compute interval.
 pub const ANALYSIS_INTERVAL: Duration = Duration::from_millis(10);
 
+/// `Analyzer` provides a set of methods to analyze the current state of the
+/// world, past behaviors of the `Player`s and `Bullet`s, and future projections.
+///
+/// # Example
+///
+/// ```
+/// let mut analyzer = Analyzer::default();
+///
+/// // Call push_state at each tick.
+/// analyzer.push_state(state, Instant::now());
+///
+/// // e.g. Find the closest player to yourself.
+/// if let Some(player) = analyzer.player_closest() {
+///     do_something_with(player);
+/// }
+/// ```
 #[derive(Debug)]
 pub struct Analyzer {
     own_player_id: u32,
@@ -34,6 +50,7 @@ impl Default for Analyzer {
 }
 
 impl Analyzer {
+    /// This method needs to be called at every client tick.
     pub fn push_state(&mut self, state: &ClientState, time: Instant) {
         self.own_player_id = state.id;
 
@@ -54,39 +71,58 @@ impl Analyzer {
         self.last_update = time;
     }
 
+    /// Returns the `Player` specified by an ID.
     pub fn player(&self, id: u32) -> Option<&Player> {
         self.players.get(&id)
     }
 
+    /// Returns your own `Player`.
+    ///
+    /// # Panics
+    ///
+    /// It panics when the latest ClientState does not include your own Player.
+    /// This can happen if you are dead and being respawn, but since the default
+    /// game loop implementation provided by the tokyo crate checks and calls the
+    /// `tick()` only when the player is alive, it should never panic in reality.
     pub fn own_player(&self) -> &Player {
-        // This unwrap() should succeed as long as you don't modify
-        // tokyo::build_game_loop function.
         self.player(self.own_player_id).unwrap()
     }
 
-    // conservative_impl_trait will help get rid of Box.
+    /// Returns an `Iterator` of `Player`s, excluding your own.
+    // FWIW, conservative_impl_trait will help get rid of Box.
     // https://github.com/rust-lang/rfcs/blob/master/text/1522-conservative-impl-trait.md
     pub fn other_players<'a>(&'a self) -> Box<Iterator<Item = &'a Player> + 'a> {
         Box::new(self.players.values().filter(move |player| player.id != self.own_player_id))
     }
 
+    /// Returns a `Player`, who is closest to the current position of your own
+    /// `Player`. None if you are the only `Player`.
     pub fn player_closest(&self) -> Option<&Player> {
         self.other_players().min_by_key(|player| (self.own_player().distance(*player) * 1e3) as u64)
     }
 
+    /// Returns a `Player`, who has been moving the least based on the average
+    /// move distance at each tick. None if you are the least moving.
     pub fn player_least_moving(&self) -> Option<&Player> {
         self.other_players()
             .min_by_key(|player| (player.trajectory.ave_abs_velocity().length() * 1e3) as u64)
     }
 
+    /// Returns a `Player`, who has earned the highest score so far. None if you
+    /// are the highest scored one.
     pub fn player_highest_score(&self) -> Option<&Player> {
         self.other_players().max_by_key(|player| player.score())
     }
 
-    pub fn player_highest_score_after(&self, after: Duration) -> Option<&Player> {
-        self.other_players().max_by_key(|player| player.score_history.project(after))
+    /// Returns a `Player`, who is expected to have earned the highest score
+    /// after the `duration`, based on the `ScoreHistory` of each `Player`. None
+    /// if you are the one.
+    pub fn player_highest_score_after(&self, duration: Duration) -> Option<&Player> {
+        self.other_players().max_by_key(|player| player.score_history.project(duration))
     }
 
+    /// Returns an `Iterator` of `Player`s whose current location is within
+    /// the `radius` of your own `Player`.
     pub fn players_within<'a>(&'a self, radius: f32) -> Box<Iterator<Item = &'a Player> + 'a> {
         Box::new(
             self.other_players()
@@ -94,24 +130,37 @@ impl Analyzer {
         )
     }
 
-    pub fn own_bullets_count(&self) -> usize {
-        self.bullets.iter().filter(|bullet| bullet.player_id == self.own_player_id).count()
+    /// Returns an `Iterator` of `Bullet`s that are shot by you and are still
+    /// inside the arena. You can have at most 4 bullets at a time.
+    pub fn own_bullets<'a>(&'a self) -> Box<Iterator<Item = &'a Bullet> + 'a> {
+        Box::new(self.bullets.iter().filter(move |bullet| bullet.player_id == self.own_player_id))
     }
 
+    /// Returns an `Iterator` of `Bullet`s that are shot by other `Player`s and
+    /// are still inside the arena.
+    pub fn other_bullets<'a>(&'a self) -> Box<Iterator<Item = &'a Bullet> + 'a> {
+        Box::new(self.bullets.iter().filter(move |bullet| bullet.player_id != self.own_player_id))
+    }
+
+    /// Returns an `Iterator` of `Bullet`s that your `Player` would be colliding
+    /// within the `duration`, if you stayed at the current position.
     pub fn bullets_colliding<'a>(
         &'a self,
         during: Duration,
     ) -> Box<Iterator<Item = &'a Bullet> + 'a> {
         Box::new(
-            self.bullets.iter().filter(move |bullet| {
+            self.other_bullets().filter(move |bullet| {
                 self.own_player().is_colliding_during(bullet, during.clone())
             }),
         )
     }
 
+    /// Returns an `Iterator` of `Bullet`s that are shot by other `Player`s and
+    /// are within the `radius` of your current position.
     pub fn bullets_within<'a>(&'a self, radius: f32) -> Box<Iterator<Item = &'a Bullet> + 'a> {
         Box::new(
-            self.bullets.iter().filter(move |bullet| self.own_player().distance(*bullet) <= radius),
+            self.other_bullets()
+                .filter(move |bullet| self.own_player().distance(*bullet) <= radius),
         )
     }
 }

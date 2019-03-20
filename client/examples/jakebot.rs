@@ -61,7 +61,7 @@ impl Handler for Player {
                 Some(GameCommand::Fire)
             }
         } else if let Some(closest) = self.analyzer.player_closest() {
-            if self.analyzer.own_bullets_count() < 1 {
+            if self.analyzer.own_bullets().count() < 1 {
                 let angle = me.angle_to(closest);
                 self.state = Some(State::Spray(3, angle - Angle::degrees(SPRAY_ANGLE)));
                 Some(GameCommand::Rotate(angle.get()))

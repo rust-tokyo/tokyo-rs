@@ -1,3 +1,7 @@
+/// Unless you want to go extreme, you will not need to understand what are
+/// inside this file except the `Handler` trait. Any modifications you make in
+/// this file may result in some undefined behaviors or consequences. Do it as
+/// your own risk :)
 use common::models::{ClientState, GameCommand, GameState, ServerToClient, MIN_COMMAND_INTERVAL};
 use failure::Error;
 use futures::{Future, Sink, Stream};
