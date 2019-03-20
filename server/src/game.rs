@@ -98,7 +98,7 @@ impl Game {
                 GameCommand::Forward(throttle) => {
                     // Bound and re-map throttle inputs.
                     let throttle = throttle.max(0.0).min(1.0);
-                    let throttle = THROTTLE_PIXELS;
+                    let throttle = throttle * THROTTLE_PIXELS;
 
                     // Move the player
                     let (vel_x, vel_y) = angle_to_vector(player.angle);
