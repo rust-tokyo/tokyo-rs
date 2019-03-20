@@ -1,7 +1,7 @@
-use std::time::Instant;
-use std::collections::HashMap;
-use std::time::{Duration, SystemTime};
-use std::collections::HashSet;
+use std::{
+    collections::{HashMap, HashSet},
+    time::{Duration, Instant, SystemTime},
+};
 use tokyo::models::{
     BulletState, DeadPlayer, GameCommand, GameState, PlayerState, BULLET_RADIUS, BULLET_SPEED,
     PLAYER_BASE_SPEED, PLAYER_RADIUS,
@@ -72,16 +72,31 @@ impl Triangle for BulletState {
     }
 }
 
+#[derive(Default, Debug)]
+struct InternalPlayerState {
+    last_fire_time: Option<Instant>,
+}
+
 pub struct Game {
     pub state: GameState,
     rng: rand::rngs::ThreadRng,
     bullet_id_counter: u32,
+    // TODO: Merge into InternalPlayerState.
     survival_times: HashMap<u32, Instant>,
+    started_at: Instant,
+    internal_player_state_map: HashMap<u32, InternalPlayerState>,
 }
 
 impl Default for Game {
     fn default() -> Self {
-        Self { state: GameState::new(BOUNDS), rng: Default::default(), bullet_id_counter: 0, survival_times: HashMap::new() }
+        Self {
+            state: GameState::new(BOUNDS),
+            rng: Default::default(),
+            bullet_id_counter: 0,
+            survival_times: HashMap::new(),
+            started_at: Instant::now(),
+            internal_player_state_map: HashMap::new(),
+        }
     }
 }
 
@@ -90,7 +105,8 @@ impl Game {
         let mut player = PlayerState::new(player_id);
         player.randomize(&mut self.rng, BOUNDS);
         self.state.players.push(player);
-        self.survival_times.insert(player_id, Instant::now() + Duration::from_secs(SURVIVAL_TIMEOUT));
+        self.survival_times
+            .insert(player_id, Instant::now() + Duration::from_secs(SURVIVAL_TIMEOUT));
     }
 
     pub fn player_left(&mut self, player_id: u32) {
@@ -107,14 +123,23 @@ impl Game {
         // info!("Player {} sent command {:#?}", player_id, cmd);
 
         if let Some(player) = self.state.players.iter_mut().find(|p| p.id == player_id) {
+            let internal_player_state = self
+                .internal_player_state_map
+                .entry(player.id)
+                .or_insert(InternalPlayerState::default());
             match cmd {
                 GameCommand::Rotate(angle) => {
                     player.angle = angle;
                 },
                 GameCommand::Throttle(throttle) => {
-                    // Bound and re-map throttle inputs.
-                    let throttle = throttle.max(0.0).min(1.0);
+                    // Throttle ceiling can be at most 3.0 if you don't shoot.
+                    let last_first_time =
+                        internal_player_state.last_fire_time.unwrap_or(self.started_at);
+                    let throttle_cap =
+                        1.0 + ((Instant::now() - last_first_time).as_secs() as f32 / 60.0).min(2.0);
 
+                    // Bound and re-map throttle inputs.
+                    let throttle = throttle.max(0.0).min(throttle_cap);
                     player.throttle = throttle;
                 },
                 GameCommand::Fire => {
@@ -139,6 +164,7 @@ impl Game {
                             x: player.x + (bullet_x * distance_from_player),
                             y: player.y + (bullet_y * distance_from_player),
                         });
+                        internal_player_state.last_fire_time = Some(Instant::now());
                     }
                 },
             }
@@ -201,11 +227,11 @@ impl Game {
             }
         }
 
-        for mut player in self.state.players.drain_filter(|player| dead_players.contains(&player.id)) {
+        for mut player in
+            self.state.players.drain_filter(|player| dead_players.contains(&player.id))
+        {
             player.randomize(&mut self.rng, BOUNDS);
-            self.state
-                .dead
-                .push(DeadPlayer { respawn: SystemTime::now() + DEAD_PUNISH, player });
+            self.state.dead.push(DeadPlayer { respawn: SystemTime::now() + DEAD_PUNISH, player });
         }
 
         // count the dead
@@ -228,7 +254,8 @@ impl Game {
             });
             for mut player in deceased {
                 // Reset their survival time bonus
-                self.survival_times.insert(player.id, Instant::now() + Duration::from_secs(SURVIVAL_TIMEOUT));
+                self.survival_times
+                    .insert(player.id, Instant::now() + Duration::from_secs(SURVIVAL_TIMEOUT));
 
                 player.randomize(&mut self.rng, BOUNDS);
                 self.state
