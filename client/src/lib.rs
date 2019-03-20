@@ -6,6 +6,7 @@ use common::models::{ClientState, GameCommand, GameState, ServerToClient, MIN_CO
 use failure::Error;
 use futures::{Future, Sink, Stream};
 use std::{
+    env,
     fmt::Debug,
     sync::{Arc, Mutex},
 };
@@ -105,8 +106,10 @@ pub fn run<H>(key: &str, name: &str, handler: H) -> Result<(), Error>
 where
     H: Handler + Send + 'static,
 {
+    let host = env::var("SERVER_HOST").unwrap_or("192.168.0.199".into());
     let url = Url::parse(&format!(
-        "ws://192.168.0.199/socket?key={}&name={}",
+        "ws://{}/socket?key={}&name={}",
+        host,
         key,
         utf8_percent_encode(name, DEFAULT_ENCODE_SET).to_string()
     ))?;
