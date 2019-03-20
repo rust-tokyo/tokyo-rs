@@ -5,7 +5,7 @@ use tokyo::models::{
     PLAYER_BASE_SPEED, PLAYER_RADIUS,
 };
 
-const DEAD_PUNISH: Duration = Duration::from_secs(3);
+const DEAD_PUNISH: Duration = Duration::from_secs(1);
 
 pub const TICKS_PER_SECOND: f32 = 30.0;
 const BOUNDS: (f32, f32) = (1440.0, 960.0);
