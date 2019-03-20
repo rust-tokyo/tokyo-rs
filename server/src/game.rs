@@ -1,3 +1,5 @@
+use std::time::Instant;
+use std::collections::HashMap;
 use std::time::{Duration, SystemTime};
 use std::collections::HashSet;
 use tokyo::models::{
@@ -10,6 +12,12 @@ const DEAD_PUNISH: Duration = Duration::from_secs(1);
 pub const TICKS_PER_SECOND: f32 = 30.0;
 const BOUNDS: (f32, f32) = (2880.0, 1920.0);
 const MAX_CONCURRENT_BULLETS: usize = 4;
+
+// Time until you start accruing points for surviving
+const SURVIVAL_TIMEOUT: u64 = 60;
+
+// Interval for accruing points after reaching the threshold
+const SURVIVAL_POINT_INTERVAL: u64 = 15;
 
 pub trait Triangle {
     fn x(&self) -> f32;
@@ -68,11 +76,12 @@ pub struct Game {
     pub state: GameState,
     rng: rand::rngs::ThreadRng,
     bullet_id_counter: u32,
+    survival_times: HashMap<u32, Instant>,
 }
 
 impl Default for Game {
     fn default() -> Self {
-        Self { state: GameState::new(BOUNDS), rng: Default::default(), bullet_id_counter: 0 }
+        Self { state: GameState::new(BOUNDS), rng: Default::default(), bullet_id_counter: 0, survival_times: HashMap::new() }
     }
 }
 
@@ -81,6 +90,7 @@ impl Game {
         let mut player = PlayerState::new(player_id);
         player.randomize(&mut self.rng, BOUNDS);
         self.state.players.push(player);
+        self.survival_times.insert(player_id, Instant::now() + Duration::from_secs(SURVIVAL_TIMEOUT));
     }
 
     pub fn player_left(&mut self, player_id: u32) {
@@ -89,6 +99,8 @@ impl Game {
         if let Some(player) = self.state.players.iter_mut().find(|p| p.id == player_id) {
             player.throttle = 0.0;
         }
+
+        self.survival_times.remove(&player_id);
     }
 
     pub fn handle_cmd(&mut self, player_id: u32, cmd: GameCommand) {
@@ -208,12 +220,16 @@ impl Game {
                     );
                     hits.push(bullet.player_id);
                     used_bullets.push(bullet.id);
+
                     true
                 } else {
                     false
                 }
             });
             for mut player in deceased {
+                // Reset their survival time bonus
+                self.survival_times.insert(player.id, Instant::now() + Duration::from_secs(SURVIVAL_TIMEOUT));
+
                 player.randomize(&mut self.rng, BOUNDS);
                 self.state
                     .dead
@@ -227,6 +243,15 @@ impl Game {
         // Update the scoreboard
         for player_id in hits {
             *self.state.scoreboard.entry(player_id).or_default() += 1;
+        }
+
+        // Reward players for staying alive
+        for (player_id, next_reward_time) in &mut self.survival_times {
+            if *next_reward_time <= Instant::now() {
+                *self.state.scoreboard.entry(*player_id).or_default() += 1;
+
+                *next_reward_time = Instant::now() + Duration::from_secs(SURVIVAL_POINT_INTERVAL);
+            }
         }
     }
 }
