@@ -1,7 +1,6 @@
-use common::models::*;
 use euclid::Angle;
 use std::time::{Duration, Instant};
-use tokyo::{self, analyzer::Analyzer, geom::*, Handler};
+use tokyo::{self, analyzer::Analyzer, geom::*, models::*, Handler};
 
 enum State {
     Spray(usize, Angle<f32>),
@@ -42,11 +41,9 @@ impl Handler for Player {
 
         let me = self.analyzer.own_player();
         if let Some(State::Dodging(count)) = self.state {
-            println!("TRYNA DODGE");
             self.state = if count > 0 { Some(State::Dodging(count - 1)) } else { None };
             Some(GameCommand::Throttle(1.0))
         } else if self.analyzer.bullets_colliding(Duration::from_millis(2000)).count() > 0 {
-            println!("OK TIME TO DODGE SOME BULLETS");
             self.state = Some(State::Dodging(5));
             Some(GameCommand::Rotate((me.angle + Angle::degrees(90.0)).get()))
         } else if let Some(State::Spray(count, angle)) = self.state {

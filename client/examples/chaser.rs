@@ -1,9 +1,9 @@
-use common::models::*;
 use std::time::Instant;
 use tokyo::{
     self,
     analyzer::Analyzer,
     behavior::{Behavior, Chase, FireAt, Sequence, Target},
+    models::*,
     Handler,
 };
 

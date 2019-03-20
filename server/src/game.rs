@@ -1,8 +1,8 @@
-use common::models::{
+use std::time::{Duration, SystemTime};
+use tokyo::models::{
     BulletState, DeadPlayer, GameCommand, GameState, PlayerState, BULLET_RADIUS, BULLET_SPEED,
     PLAYER_BASE_SPEED, PLAYER_RADIUS,
 };
-use std::time::{Duration, SystemTime};
 
 const DEAD_PUNISH: Duration = Duration::from_secs(3);
 

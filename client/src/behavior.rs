@@ -1,8 +1,8 @@
 use crate::{
     analyzer::{player::Player, Analyzer},
     geom::*,
+    models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED},
 };
-use common::models::{GameCommand, PLAYER_MAX_SPEED, PLAYER_MIN_SPEED};
 use rand::{thread_rng, Rng};
 use std::{collections::VecDeque, fmt::Debug, time::Duration};
 

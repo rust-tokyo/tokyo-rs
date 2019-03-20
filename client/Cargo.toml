@@ -11,19 +11,16 @@ categories = []
 readme = "README.md"
 
 [dependencies]
-common = { path = "../common" }
-euclid = "0.19.6"
+actix = "0.7"
+euclid = "0.19"
 failure = "0.1"
 futures = "0.1"
 log = "0.4"
 url = "1.7"
-rand = "0.6.5"
+rand = "0.6"
 serde = "1.0"
 serde_derive = "1.0"
 serde_json = "1.0"
-text_io = "0.1.7"
+text_io = "0.1"
 tokio = "0.1"
 tokio-tungstenite = "0.6"
-
-[dev-dependencies]
-rand = "0.6"

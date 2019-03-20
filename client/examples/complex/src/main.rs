@@ -4,12 +4,12 @@ use crate::{
     condition::{Always, PlayerWithin},
     strategy::{PrioritizedBehavior, Strategy, StrategyNode},
 };
-use common::models::*;
 use std::time::Instant;
 use tokyo::{
     self,
     analyzer::Analyzer,
     behavior::{Dodge, FireAt, Target},
+    models::*,
     Handler,
 };
 

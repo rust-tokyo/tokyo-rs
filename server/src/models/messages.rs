@@ -1,5 +1,5 @@
 use actix::Message;
-use common::models::GameCommand;
+use tokyo::models::GameCommand;
 
 #[derive(Debug, Message)]
 pub struct PlayerGameCommand {

@@ -8,5 +8,4 @@ authors = ["Ryo Kawaguchi <ryo@kawagu.ch>"]
 edition = "2018"
 
 [dependencies]
-common = { path = "../../../common" }
 tokyo = { path = "../../../client" }
