@@ -1,4 +1,5 @@
 use std::time::{Duration, SystemTime};
+use std::collections::HashSet;
 use tokyo::models::{
     BulletState, DeadPlayer, GameCommand, GameState, PlayerState, BULLET_RADIUS, BULLET_SPEED,
     PLAYER_BASE_SPEED, PLAYER_RADIUS,
@@ -176,6 +177,23 @@ impl Game {
                 && b.y > (BULLET_RADIUS)
                 && b.y < (BOUNDS.1 + BULLET_RADIUS)
         });
+
+        // count collisions
+        let mut dead_players = HashSet::new();
+        for player in &self.state.players {
+            for other in &self.state.players {
+                if player.id != other.id && player.is_colliding(other) {
+                    dead_players.insert(player.id);
+                    dead_players.insert(other.id);
+                }
+            }
+        }
+
+        for player in self.state.players.drain_filter(|player| dead_players.contains(&player.id)) {
+            self.state
+                .dead
+                .push(DeadPlayer { respawn: SystemTime::now() + DEAD_PUNISH, player });
+        }
 
         // count the dead
         let mut hits = vec![];
