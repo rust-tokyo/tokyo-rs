@@ -91,8 +91,8 @@ impl Analyzer {
     /// Returns an `Iterator` of `Player`s, excluding your own.
     // FWIW, conservative_impl_trait will help get rid of Box.
     // https://github.com/rust-lang/rfcs/blob/master/text/1522-conservative-impl-trait.md
-    pub fn other_players<'a>(&'a self) -> Box<Iterator<Item = &'a Player> + 'a> {
-        Box::new(self.players.values().filter(move |player| player.id != self.own_player_id))
+    pub fn other_players<'a>(&'a self) -> impl Iterator<Item = &'a Player> {
+        self.players.values().filter(move |player| player.id != self.own_player_id)
     }
 
     /// Returns a `Player`, who is closest to the current position of your own
@@ -123,23 +123,21 @@ impl Analyzer {
 
     /// Returns an `Iterator` of `Player`s whose current location is within
     /// the `radius` of your own `Player`.
-    pub fn players_within<'a>(&'a self, radius: f32) -> Box<Iterator<Item = &'a Player> + 'a> {
-        Box::new(
-            self.other_players()
-                .filter(move |player| self.own_player().distance(*player) <= radius),
-        )
+    pub fn players_within<'a>(&'a self, radius: f32) -> impl Iterator<Item = &'a Player> {
+        self.other_players()
+            .filter(move |player| self.own_player().distance(*player) <= radius)
     }
 
     /// Returns an `Iterator` of `Bullet`s that are shot by you and are still
     /// inside the arena. You can have at most 4 bullets at a time.
-    pub fn own_bullets<'a>(&'a self) -> Box<Iterator<Item = &'a Bullet> + 'a> {
-        Box::new(self.bullets.iter().filter(move |bullet| bullet.player_id == self.own_player_id))
+    pub fn own_bullets<'a>(&'a self) -> impl Iterator<Item = &'a Bullet> {
+        self.bullets.iter().filter(move |bullet| bullet.player_id == self.own_player_id)
     }
 
     /// Returns an `Iterator` of `Bullet`s that are shot by other `Player`s and
     /// are still inside the arena.
-    pub fn other_bullets<'a>(&'a self) -> Box<Iterator<Item = &'a Bullet> + 'a> {
-        Box::new(self.bullets.iter().filter(move |bullet| bullet.player_id != self.own_player_id))
+    pub fn other_bullets<'a>(&'a self) -> impl Iterator<Item = &'a Bullet> {
+        self.bullets.iter().filter(move |bullet| bullet.player_id != self.own_player_id)
     }
 
     /// Returns an `Iterator` of `Bullet`s that your `Player` would be colliding
@@ -147,20 +145,16 @@ impl Analyzer {
     pub fn bullets_colliding<'a>(
         &'a self,
         during: Duration,
-    ) -> Box<Iterator<Item = &'a Bullet> + 'a> {
-        Box::new(
-            self.other_bullets().filter(move |bullet| {
-                self.own_player().is_colliding_during(bullet, during.clone())
-            }),
-        )
+    ) -> impl Iterator<Item = &'a Bullet> {
+        self.other_bullets().filter(move |bullet| {
+            self.own_player().is_colliding_during(bullet, during.clone())
+        })
     }
 
     /// Returns an `Iterator` of `Bullet`s that are shot by other `Player`s and
     /// are within the `radius` of your current position.
-    pub fn bullets_within<'a>(&'a self, radius: f32) -> Box<Iterator<Item = &'a Bullet> + 'a> {
-        Box::new(
-            self.other_bullets()
-                .filter(move |bullet| self.own_player().distance(*bullet) <= radius),
-        )
+    pub fn bullets_within<'a>(&'a self, radius: f32) -> impl Iterator<Item = &'a Bullet> {
+        self.other_bullets()
+            .filter(move |bullet| self.own_player().distance(*bullet) <= radius)
     }
 }
